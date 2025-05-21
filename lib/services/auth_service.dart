@@ -1,5 +1,6 @@
 /// Authentication service that handles user login, logout, and password management.
 /// Manages JWT tokens and user credentials using secure storage.
+library;
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

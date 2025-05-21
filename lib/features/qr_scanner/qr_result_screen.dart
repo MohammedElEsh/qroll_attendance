@@ -1,5 +1,6 @@
 /// Result screen displayed after scanning a QR code.
 /// Shows success/failure status and provides options to return to dashboard or scan again.
+library;
 import 'package:flutter/material.dart';
 import '../../screens/dashboard_screen.dart';
 import 'qr_scanner_screen.dart';
@@ -93,7 +94,7 @@ class QRResultScreen extends StatelessWidget {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

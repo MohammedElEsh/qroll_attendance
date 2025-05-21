@@ -1,11 +1,11 @@
 /// Profile screen that displays user information and allows profile management.
 /// Shows personal details, contact information, and account details.
+library;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/profile_service.dart';
 import '../models/user_profile.dart';
 import 'edit_profile_screen.dart';
-import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

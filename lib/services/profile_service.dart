@@ -1,5 +1,6 @@
 /// Profile service that handles user profile data management.
 /// Provides functionality to fetch and update user profile information.
+library;
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_profile.dart';

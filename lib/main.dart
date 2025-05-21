@@ -1,5 +1,6 @@
 /// Entry point of the QRoll Attendance application.
 /// Initializes the app with Riverpod state management and sets up the main UI.
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/splash_screen.dart';
@@ -21,26 +22,48 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         // Enable Material 3 design system
         useMaterial3: true,
-        // Configure color scheme with indigo as the primary color
+        scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
+          seedColor: const Color(0xFF7EF4E1),
           brightness: Brightness.light,
+          primary: const Color(0xFF7EF4E1),
+          secondary: const Color(0xFF7EF4E1),
+          background: Colors.white,
+          surface: Colors.white,
+          onPrimary: Colors.black,
+          onSecondary: Colors.black,
+          onBackground: Colors.black,
+          onSurface: Colors.black,
         ),
         // Set Inter as the default font family
         fontFamily: 'Inter',
         // Customize app bar appearance
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.indigo,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
           centerTitle: true,
           elevation: 0,
+          iconTheme: IconThemeData(color: Colors.black),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        // Configure card styling for dashboard stats
+        cardTheme: CardTheme(
+          color: Colors.grey[100],
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         // Configure elevated button styling
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.indigo,
-            foregroundColor: Colors.white,
-            elevation: 2,
+            backgroundColor: const Color(0xFF7EF4E1),
+            foregroundColor: Colors.black,
+            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -48,13 +71,33 @@ class MyApp extends StatelessWidget {
               vertical: 16.0,
               horizontal: 24.0,
             ),
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
         // Configure input field styling
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Colors.grey[100],
+          hintStyle: const TextStyle(color: Colors.black54),
+          labelStyle: const TextStyle(color: Colors.black),
+        ),
+        // Configure icon theme
+        iconTheme: const IconThemeData(color: Colors.black),
+        // Configure text theme
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black87),
+          titleLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          titleMedium: TextStyle(color: Colors.black),
+        ),
+        // Configure drawer theme to match the dark navy sidebar
+        drawerTheme: const DrawerThemeData(
+          backgroundColor: Color(0xFF1A1E38),
+          scrimColor: Colors.black54,
         ),
       ),
       home: const SplashScreen(),

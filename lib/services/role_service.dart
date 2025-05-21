@@ -1,5 +1,6 @@
 /// Role service that manages user role information.
 /// Provides functionality to fetch available roles from the API.
+library;
 import 'package:dio/dio.dart';
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

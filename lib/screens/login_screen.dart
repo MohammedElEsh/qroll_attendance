@@ -1,5 +1,6 @@
 /// Login screen that handles user authentication.
 /// Provides email/password login with role selection functionality.
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';

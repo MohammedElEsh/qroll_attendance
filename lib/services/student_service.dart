@@ -1,5 +1,6 @@
 /// Student service that manages student-related operations.
 /// Provides functionality for CRUD operations on students and their attendance records.
+library;
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/student.dart';
@@ -45,7 +46,7 @@ class StudentService {
       final token = await _secureStorage.read(key: AuthService.tokenKey);
 
       final response = await _dio.get(
-        '${baseUrl}${studentsEndpoint}/$id',
+        '$baseUrl$studentsEndpoint/$id',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -109,7 +110,7 @@ class StudentService {
       final token = await _secureStorage.read(key: AuthService.tokenKey);
 
       final response = await _dio.post(
-        '${baseUrl}${studentsEndpoint}/$id',
+        '$baseUrl$studentsEndpoint/$id',
         data: {
           '_method': 'PUT',
           'name': name,
@@ -138,7 +139,7 @@ class StudentService {
       final token = await _secureStorage.read(key: AuthService.tokenKey);
 
       final response = await _dio.delete(
-        '${baseUrl}${studentsEndpoint}/$id',
+        '$baseUrl$studentsEndpoint/$id',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -155,7 +156,7 @@ class StudentService {
       final token = await _secureStorage.read(key: AuthService.tokenKey);
 
       final response = await _dio.get(
-        '${baseUrl}/attendance',
+        '$baseUrl/attendance',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -179,7 +180,7 @@ class StudentService {
       final token = await _secureStorage.read(key: AuthService.tokenKey);
 
       final response = await _dio.post(
-        '${baseUrl}/attendance/scan',
+        '$baseUrl/attendance/scan',
         data: {'qr_data': qrData},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
