@@ -4,10 +4,7 @@ import '../services/profile_service.dart';
 import '../models/user_profile.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/login_screen.dart';
-import '../features/qr_scanner/qr_scanner_screen.dart';
-import '../screens/attendance_report.dart';
 import '../screens/profile_screen.dart';
-import '../screens/change_password_screen.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -22,6 +19,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
   UserProfile? _userProfile;
   bool _isLoading = true;
+  bool _isCoursesExpanded = false;
 
   @override
   void initState() {
@@ -109,45 +107,65 @@ class _AppDrawerState extends State<AppDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: const Color(0xFF161B39), // Dark navy background
       child: Column(
         children: [
-          // Drawer Header
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: Colors.indigo.shade800),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
+          // App Logo and Brand
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 40, 16, 10),
+            child: Center(
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF161B39),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Image.asset(
+                  'assets/image/Screenshot 2025-05-20 035639.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+
+          // User Profile Section
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey[300],
               backgroundImage:
                   _userProfile?.image != null
                       ? NetworkImage(_userProfile!.image!)
                       : null,
-              child:
-                  _userProfile?.image == null
-                      ? Text(
-                        _userProfile?.name.isNotEmpty == true
-                            ? _userProfile!.name[0].toUpperCase()
-                            : 'S',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo.shade800,
-                        ),
+                  child: _userProfile?.image == null
+                      ? Icon(
+                          Icons.person,
+                          color: Colors.grey[700],
+                          size: 24,
                       )
                       : null,
             ),
-            accountName: Text(
-              _isLoading ? 'Loading...' : (_userProfile?.name ?? 'Student'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                const SizedBox(width: 12),
+                Text(
+                  _isLoading ? 'Loading...' : (_userProfile?.name ?? 'User'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
             ),
-            accountEmail: Text(
-              _isLoading ? '' : (_userProfile?.email ?? ''),
-              style: const TextStyle(fontSize: 14),
+                ),
+              ],
             ),
           ),
 
-          // Menu Items
-          _buildDrawerItem(
-            icon: Icons.dashboard,
-            title: 'Dashboard',
+          // Menu items
+          _buildMenuItem(
+            icon: Icons.home_outlined,
+            title: 'Home',
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).pushReplacement(
@@ -158,35 +176,9 @@ class _AppDrawerState extends State<AppDrawer> {
             },
           ),
 
-          _buildDrawerItem(
-            icon: Icons.qr_code_scanner,
-            title: 'Scan QR Code',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const QRScannerScreen(),
-                ),
-              );
-            },
-          ),
-
-          _buildDrawerItem(
-            icon: Icons.assessment,
-            title: 'Attendance Report',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const AttendanceReportScreen(),
-                ),
-              );
-            },
-          ),
-
-          _buildDrawerItem(
-            icon: Icons.person,
-            title: 'Profile',
+          _buildMenuItem(
+            icon: Icons.person_outline,
+            title: 'My Profile',
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).push(
@@ -195,55 +187,140 @@ class _AppDrawerState extends State<AppDrawer> {
             },
           ),
 
-          _buildDrawerItem(
-            icon: Icons.lock,
-            title: 'Change Password',
+          // Courses with submenu
+          _buildExpandableMenuItem(
+            icon: Icons.menu_book_outlined,
+            title: 'Courses',
+            isExpanded: _isCoursesExpanded,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ChangePasswordScreen(),
-                ),
-              );
+              setState(() {
+                _isCoursesExpanded = !_isCoursesExpanded;
+              });
             },
           ),
 
-          const Divider(),
+          if (_isCoursesExpanded) ...[
+            _buildSubmenuItem(
+              title: 'CS',
+              onTap: () {
+                // Handle CS course navigation
+                Navigator.pop(context);
+              },
+            ),
+            _buildSubmenuItem(
+              title: 'IT',
+              onTap: () {
+                // Handle IT course navigation
+                Navigator.pop(context);
+              },
+            ),
+          ],
 
-          _buildDrawerItem(
-            icon: Icons.logout,
-            title: 'Logout',
-            onTap: _logout,
-            iconColor: Colors.red,
-            textColor: Colors.red,
+          _buildMenuItem(
+            icon: Icons.inbox_outlined,
+            title: 'Inbox',
+            onTap: () {
+              // Handle inbox navigation
+              Navigator.pop(context);
+            },
           ),
 
+          // Spacer to push logout to bottom
           const Spacer(),
 
-          // App Version
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Version 1.0.0',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-            ),
+          // Logout button
+          _buildMenuItem(
+            icon: Icons.logout_outlined,
+            title: 'Log Out',
+            onTap: _logout,
+            showChevron: false,
           ),
+
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem({
+  Widget _buildMenuItem({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color iconColor = Colors.indigo,
-    Color textColor = Colors.black87,
+    bool showChevron = true,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(title, style: TextStyle(color: textColor)),
+      leading: Icon(
+        icon,
+        color: Colors.white,
+        size: 22,
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+      ),
+      trailing: showChevron
+          ? const Icon(
+              Icons.chevron_right,
+              color: Colors.white,
+              size: 22,
+            )
+          : null,
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
+  }
+
+  Widget _buildExpandableMenuItem({
+    required IconData icon,
+    required String title,
+    required bool isExpanded,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: Colors.white,
+        size: 22,
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+      ),
+      trailing: Icon(
+        isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+        color: Colors.white,
+        size: 22,
+      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
+  }
+
+  Widget _buildSubmenuItem({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: Colors.white,
+        size: 22,
+      ),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.only(left: 72, right: 24, top: 4, bottom: 4),
     );
   }
 }
