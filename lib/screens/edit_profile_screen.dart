@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../services/profile_service.dart';
+import '../services/auth_service.dart';
 import '../models/user_profile.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/custom_button.dart';
@@ -136,15 +137,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
 
     try {
-      final updatedProfile = await _profileService.updateProfile(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        nationalId: _nationalIdController.text.trim(),
-        birthDate: _birthDateController.text.trim(),
-        address: _addressController.text.trim(),
-        image: _imageFile?.path,
-      );
+      final token = await AuthService().getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final data = {
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'national_id': _nationalIdController.text.trim(),
+        'birth_date': _birthDateController.text.trim(),
+        'address': _addressController.text.trim(),
+        if (_imageFile?.path != null) 'image': _imageFile!.path,
+      };
+
+      await _profileService.updateProfile(token: token, data: data);
 
       if (!mounted) return;
 
@@ -156,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       // Return to profile screen
-      Navigator.pop(context, updatedProfile);
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
 

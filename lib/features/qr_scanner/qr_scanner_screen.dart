@@ -1,6 +1,7 @@
 /// QR code scanner screen for marking attendance.
 /// Uses device camera to scan QR codes and process attendance records.
 library;
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'qr_result_screen.dart';
@@ -88,12 +89,14 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       // Resume camera if there was an error
       _controller.start();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error scanning QR code: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error scanning QR code: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

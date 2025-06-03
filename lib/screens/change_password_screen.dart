@@ -39,14 +39,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     });
 
     try {
-      final success = await _authService.resetPassword(
-        _oldPasswordController.text,
-        _newPasswordController.text,
+      final response = await _authService.resetPassword(
+        oldPassword: _oldPasswordController.text,
+        newPassword: _newPasswordController.text,
       );
 
       if (!mounted) return;
 
-      if (success) {
+      if (response.statusCode == 200 && response.data['status'] == true) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

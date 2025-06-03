@@ -1,13 +1,10 @@
 /// Login screen that handles user authentication.
-/// Provides email/password login with role selection functionality.
-library;
+/// Provides clean UI for student login with national ID and password.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/auth_service.dart';
-import '../services/role_service.dart';
 import '../screens/dashboard_screen.dart';
-import '../widgets/custom_button.dart';
 import '../widgets/custom_textfield.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -23,40 +20,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Service instances
+  // Service instance
   final _authService = AuthService();
-  final _roleService = RoleService();
 
   // State variables
   bool _isLoading = false;
   bool _obscurePassword = true;
-  List<Role> _roles = [];
-  int _selectedRoleId = 1; // Default: Student
+  final int _roleId = 4; // Fixed for student
 
   @override
   void initState() {
     super.initState();
-    _loadRoles();
-  }
-
-  /// Loads available roles from the role service
-  Future<void> _loadRoles() async {
-    try {
-      final roles = await _roleService.getRoles();
-      setState(() {
-        _roles = roles;
-        if (roles.isNotEmpty) {
-          _selectedRoleId = roles.first.id;
-        }
-      });
-    } catch (e) {
-      _showErrorSnackBar('Failed to load roles: $e');
-    }
   }
 
   /// Handles the login process
   /// Validates form inputs and attempts to authenticate the user
   Future<void> _login() async {
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -66,23 +48,107 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      final result = await _authService.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-        _selectedRoleId,
+      final response = await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        roleId: _roleId,
       );
 
       if (!mounted) return;
 
-      if (result['status'] == true) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
+      // Check for successful response
+      if (response.statusCode == 200) {
+        // Handle different response structures
+        bool isSuccess = false;
+        String? token;
+        String? message;
+
+        if (response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+
+          // Check for status field
+          if (data.containsKey('status')) {
+            isSuccess =
+                data['status'] == true ||
+                data['status'] == 'true' ||
+                data['status'] == 1;
+          } else {
+            // If no status field, assume success if we have a token
+            isSuccess =
+                data.containsKey('token') ||
+                (data.containsKey('data') &&
+                    data['data'] is Map &&
+                    data['data']['token'] != null);
+          }
+
+          // Extract token
+          if (data.containsKey('token')) {
+            token = data['token'];
+          } else if (data.containsKey('data') && data['data'] is Map) {
+            token = data['data']['token'];
+          }
+
+          // Extract message
+          message = data['message'] ?? data['msg'];
+        }
+
+        if (isSuccess && token != null) {
+          // Show success message
+          _showSuccessSnackBar(message ?? 'Login successful! Welcome back.');
+
+          // Small delay to show success message
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (!mounted) return;
+
+          // Navigate to dashboard
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        } else {
+          // Handle API error response
+          final errorMsg = message ?? 'Invalid credentials. Please try again.';
+          _showErrorSnackBar(errorMsg);
+        }
       } else {
-        _showErrorSnackBar(result['message'] ?? 'Login failed');
+        // Handle non-200 status codes
+        String errorMsg = 'Login failed. Please try again.';
+
+        if (response.statusCode == 401) {
+          errorMsg =
+              'Invalid credentials. Please check your national ID and password.';
+        } else if (response.statusCode == 422) {
+          errorMsg = 'Invalid input. Please check your credentials.';
+        } else if (response.statusCode != null && response.statusCode! >= 500) {
+          errorMsg = 'Server error. Please try again later.';
+        }
+
+        _showErrorSnackBar(errorMsg);
       }
     } catch (e) {
-      _showErrorSnackBar('Login failed: $e');
+      if (!mounted) return;
+
+      // Handle different types of errors
+      String errorMessage =
+          'Login failed. Please check your connection and try again.';
+
+      if (e.toString().contains('Connection timeout') ||
+          e.toString().contains('SocketException') ||
+          e.toString().contains('Network is unreachable')) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection.';
+      } else if (e.toString().contains('Connection refused')) {
+        errorMessage = 'Cannot connect to server. Please try again later.';
+      } else if (e.toString().contains('Invalid credentials')) {
+        errorMessage = 'Invalid national ID or password. Please try again.';
+      } else if (e.toString().contains('401')) {
+        errorMessage =
+            'Invalid credentials. Please check your national ID and password.';
+      } else if (e.toString().contains('422')) {
+        errorMessage = 'Invalid input format. Please check your credentials.';
+      }
+
+      _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
         setState(() {
@@ -96,9 +162,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red.shade600,
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  /// Displays a success message in a snackbar
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -123,29 +216,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App logo and title container
+                  // App logo and branding
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: Colors.indigo.shade50,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.indigo.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
+                        // App logo
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.shade700,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.school,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         Text(
-                          'QROLL',
+                          'QRoll Attendance',
                           style: TextStyle(
-                            fontSize: 40,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.indigo.shade900,
                           ),
                         ),
+                        const SizedBox(height: 8),
                         Text(
-                          'ATTENDANCE',
+                          'University Student Portal',
                           style: TextStyle(
-                            fontSize: 16,
-                            letterSpacing: 4,
-                            color: Colors.indigo.shade700,
+                            fontSize: 14,
+                            color: Colors.indigo.shade600,
+                            letterSpacing: 1,
                           ),
                         ),
                       ],
@@ -153,32 +269,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Login form title
+                  // Welcome title
                   Text(
-                    'Log In To Your Account',
+                    'Student Login',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.indigo.shade900,
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enter your credentials to access your account',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 30),
 
-                  // Email input field with validation
+                  // National ID input field with validation
                   CustomTextField(
                     controller: _emailController,
-                    labelText: 'Email',
-                    prefixIcon: Icons.email,
-                    keyboardType: TextInputType.emailAddress,
+                    labelText: 'National ID',
+                    hintText: 'Enter your national ID',
+                    prefixIcon: Icons.badge_outlined,
+                    keyboardType: TextInputType.text,
+                    autofocus: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return 'Please enter your national ID';
                       }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(value)) {
-                        return 'Please enter a valid email';
+                      if (value.trim().length < 8) {
+                        return 'National ID must be at least 8 characters';
                       }
                       return null;
                     },
@@ -189,23 +311,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   CustomTextField(
                     controller: _passwordController,
                     labelText: 'Password',
-                    prefixIcon: Icons.lock,
+                    hintText: 'Enter your password',
+                    prefixIcon: Icons.lock_outline,
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
                       }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                      if (value.length < 4) {
+                        return 'Password must be at least 4 characters';
                       }
                       return null;
                     },
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.grey,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey.shade600,
                       ),
                       onPressed: () {
                         setState(() {
@@ -213,64 +337,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         });
                       },
                     ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Role selection dropdown
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        isExpanded: true,
-                        value: _selectedRoleId,
-                        icon: const Icon(Icons.arrow_drop_down),
-                        elevation: 16,
-                        hint: const Text('Select Role'),
-                        style: TextStyle(
-                          color: Colors.indigo.shade900,
-                          fontSize: 16,
-                        ),
-                        onChanged: (int? value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedRoleId = value;
-                            });
-                          }
-                        },
-                        items:
-                            _roles.map<DropdownMenuItem<int>>((Role role) {
-                              return DropdownMenuItem<int>(
-                                value: role.id,
-                                child: Text(role.name),
-                              );
-                            }).toList(),
-                      ),
-                    ),
+                    onSubmitted: (_) => _isLoading ? null : _login(),
                   ),
                   const SizedBox(height: 30),
 
                   // Login button with loading state
-                  CustomButton(
-                    text: 'Login',
-                    onPressed: _isLoading ? null : _login,
-                    isLoading: _isLoading,
-                    loadingIndicator: SpinKitThreeBounce(
-                      color: Colors.white,
-                      size: 20,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo.shade700,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        disabledBackgroundColor: Colors.grey.shade300,
+                      ),
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                              : const Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Version Text
-                  Text(
-                    'Version 1.0.0',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),

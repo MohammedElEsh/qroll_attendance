@@ -1,11 +1,11 @@
 /// Initial screen shown when the app starts.
 /// Handles app initialization and authentication state check.
 library;
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
-import '../screens/dashboard_screen.dart';
-// import '../screens/login_screen.dart';
+import '../screens/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,10 +24,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   /// Checks authentication status and navigates to appropriate screen
-  /// Shows splash screen for 10 seconds before redirecting
+  /// Shows splash screen for 2 seconds before redirecting
   Future<void> _navigateToNextScreen() async {
     // Wait for 2 seconds to display splash screen
-    await Future.delayed(const Duration(seconds: 10));
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
@@ -39,12 +39,12 @@ class _SplashScreenState extends State<SplashScreen> {
     if (isLoggedIn) {
       // Navigate to the dashboard if already logged in
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     } else {
       // Navigate to the login screen if not logged in
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }

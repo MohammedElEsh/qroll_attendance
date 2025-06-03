@@ -60,33 +60,26 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.pop(context);
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  navigator.pop();
 
                   try {
-                    final result = await _authService.logout();
+                    await _authService.logoutLocal();
 
                     if (!mounted) return;
 
-                    // Navigate to login screen only if the widget is still mounted
-                    if (result) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Logout failed'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
+                    // Navigate to login screen
+                    navigator.pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                      (route) => false,
+                    );
                   } catch (e) {
                     if (!mounted) return;
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       SnackBar(
                         content: Text('Logout failed: $e'),
                         backgroundColor: Colors.red,
@@ -137,18 +130,19 @@ class _AppDrawerState extends State<AppDrawer> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.grey[300],
-              backgroundImage:
-                  _userProfile?.image != null
-                      ? NetworkImage(_userProfile!.image!)
-                      : null,
-                  child: _userProfile?.image == null
-                      ? Icon(
-                          Icons.person,
-                          color: Colors.grey[700],
-                          size: 24,
-                      )
-                      : null,
-            ),
+                  backgroundImage:
+                      _userProfile?.image != null
+                          ? NetworkImage(_userProfile!.image!)
+                          : null,
+                  child:
+                      _userProfile?.image == null
+                          ? Icon(
+                            Icons.person,
+                            color: Colors.grey[700],
+                            size: 24,
+                          )
+                          : null,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   _isLoading ? 'Loading...' : (_userProfile?.name ?? 'User'),
@@ -156,7 +150,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-            ),
+                  ),
                 ),
               ],
             ),
@@ -249,25 +243,15 @@ class _AppDrawerState extends State<AppDrawer> {
     bool showChevron = true,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.white,
-        size: 22,
-      ),
+      leading: Icon(icon, color: Colors.white, size: 22),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
-      trailing: showChevron
-          ? const Icon(
-              Icons.chevron_right,
-              color: Colors.white,
-              size: 22,
-            )
-          : null,
+      trailing:
+          showChevron
+              ? const Icon(Icons.chevron_right, color: Colors.white, size: 22)
+              : null,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
@@ -280,17 +264,10 @@ class _AppDrawerState extends State<AppDrawer> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.white,
-        size: 22,
-      ),
+      leading: Icon(icon, color: Colors.white, size: 22),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
       trailing: Icon(
         isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -309,18 +286,16 @@ class _AppDrawerState extends State<AppDrawer> {
     return ListTile(
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: Colors.white,
-        size: 22,
-      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white, size: 22),
       onTap: onTap,
-      contentPadding: const EdgeInsets.only(left: 72, right: 24, top: 4, bottom: 4),
+      contentPadding: const EdgeInsets.only(
+        left: 72,
+        right: 24,
+        top: 4,
+        bottom: 4,
+      ),
     );
   }
 }

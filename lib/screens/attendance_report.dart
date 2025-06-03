@@ -1,6 +1,7 @@
 /// Attendance report screen that displays student attendance records and statistics.
 /// Shows attendance history grouped by month with summary statistics.
 library;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/student_service.dart';
@@ -37,7 +38,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
     });
 
     try {
-      final records = await _studentService.getAttendanceRecords();
+      final records = await _studentService.getAllAttendanceRecords();
 
       if (mounted) {
         setState(() {
@@ -315,9 +316,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
                   const SizedBox(height: 8),
 
                   // Records for this month
-                  ...records
-                      .map((record) => AttendanceCard(record: record))
-                      ,
+                  ...records.map((record) => AttendanceCard(record: record)),
                   const SizedBox(height: 16),
                 ],
               );

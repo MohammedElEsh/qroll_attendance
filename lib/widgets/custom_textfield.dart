@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final FocusNode? focusNode;
   final EdgeInsetsGeometry? contentPadding;
+  final bool autofocus;
 
   const CustomTextField({
     super.key,
@@ -36,6 +37,7 @@ class CustomTextField extends StatelessWidget {
     this.textInputAction,
     this.focusNode,
     this.contentPadding,
+    this.autofocus = false,
   });
 
   @override
@@ -49,6 +51,7 @@ class CustomTextField extends StatelessWidget {
       enabled: enabled,
       textInputAction: textInputAction,
       focusNode: focusNode,
+      autofocus: autofocus,
       onChanged: onChanged,
       onFieldSubmitted: onSubmitted,
       style: const TextStyle(fontSize: 16),
@@ -59,45 +62,31 @@ class CustomTextField extends StatelessWidget {
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
-          ),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
-          ),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.indigo.shade700,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: Colors.indigo.shade700, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.red.shade700,
-          ),
+          borderSide: BorderSide(color: Colors.red.shade700),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Colors.red.shade700,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: Colors.red.shade700, width: 2),
         ),
-        contentPadding: contentPadding ??
-            const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
+        contentPadding:
+            contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         filled: true,
         fillColor: enabled ? Colors.white : Colors.grey.shade100,
       ),
       validator: validator,
     );
   }
-} 
+}

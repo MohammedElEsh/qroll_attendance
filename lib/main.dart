@@ -1,6 +1,7 @@
 /// Entry point of the QRoll Attendance application.
 /// Initializes the app with Riverpod state management and sets up the main UI.
 library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/splash_screen.dart';
@@ -28,11 +29,9 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.light,
           primary: const Color(0xFF7EF4E1),
           secondary: const Color(0xFF7EF4E1),
-          background: Colors.white,
           surface: Colors.white,
           onPrimary: Colors.black,
           onSecondary: Colors.black,
-          onBackground: Colors.black,
           onSurface: Colors.black,
         ),
         // Set Inter as the default font family
@@ -91,7 +90,10 @@ class MyApp extends StatelessWidget {
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.black),
           bodyMedium: TextStyle(color: Colors.black87),
-          titleLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          titleLarge: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
           titleMedium: TextStyle(color: Colors.black),
         ),
         // Configure drawer theme to match the dark navy sidebar

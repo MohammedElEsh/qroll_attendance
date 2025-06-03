@@ -1,136 +1,209 @@
-/// Authentication service that handles user login, logout, and password management.
-/// Manages JWT tokens and user credentials using secure storage.
-library;
+/// Authentication service for student users.
+/// Handles login, logout, password reset, and password change operations.
+
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
+  // Singleton instance
+  static final AuthService _instance = AuthService._internal();
+
+  // Factory constructor to return the singleton instance
+  factory AuthService() => _instance;
+
+  // Private constructor for singleton pattern
+  AuthService._internal();
+
   // HTTP client for API requests
   final Dio _dio = Dio();
-  
-  // Secure storage for sensitive data
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // API endpoints
-  static const String baseUrl = 'https://api.qrollattendance.com/api';
-  static const String loginEndpoint = '/login';
-  static const String logoutEndpoint = '/logout';
-  static const String resetPasswordEndpoint = '/reset-password';
+  // Storage key for auth token
+  static const String tokenKey = 'auth_token';
 
-  // Secure storage keys
-  static const String tokenKey = 'jwt_token';
-  static const String userIdKey = 'user_id';
-  static const String roleIdKey = 'role_id';
+  // Configurable base URL
+  String baseUrl = 'https://azure-hawk-973666.hostingersite.com/api';
 
-  /// Authenticates user with email, password, and role ID
-  /// Returns user data and stores authentication token
-  Future<Map<String, dynamic>> login(
-    String email,
-    String password,
-    int roleId,
-  ) async {
+  /// Configure the base URL for the API
+  void configureBaseUrl(String url) {
+    baseUrl = url;
+  }
+
+  /// Login with email, password and role ID
+  /// Returns the full response for flexibility
+  Future<Response> login({
+    required String email,
+    required String password,
+    required int roleId,
+  }) async {
     try {
-      final response = await _dio.post(
-        baseUrl + loginEndpoint,
-        data: {'email': email, 'password': password, 'role_id': roleId},
-      );
+      final formData = FormData.fromMap({
+        'email': email,
+        'password': password,
+        'role_id': roleId,
+      });
 
+      // Configure Dio with timeout and headers
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+      _dio.options.headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+      };
+
+      final response = await _dio.post('$baseUrl/login', data: formData);
+
+      // Handle different response structures and store token
       if (response.statusCode == 200) {
-        // Store authentication data securely
-        final String token = response.data['data']['token'];
-        final int userId = response.data['data']['user']['id'];
+        String? token;
+        bool hasStatus = false;
+        bool statusValue = false;
 
-        await _secureStorage.write(key: tokenKey, value: token);
-        await _secureStorage.write(key: userIdKey, value: userId.toString());
-        await _secureStorage.write(key: roleIdKey, value: roleId.toString());
+        if (response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
 
-        return response.data;
-      } else {
-        throw Exception('Failed to login');
+          // Check status field
+          if (data.containsKey('status')) {
+            hasStatus = true;
+            statusValue =
+                data['status'] == true ||
+                data['status'] == 'true' ||
+                data['status'] == 1;
+          }
+
+          // Extract token from different possible locations
+          if (data.containsKey('token')) {
+            token = data['token'];
+          } else if (data.containsKey('data') && data['data'] is Map) {
+            final nestedData = data['data'] as Map<String, dynamic>;
+            if (nestedData.containsKey('token')) {
+              token = nestedData['token'];
+            }
+          } else if (data.containsKey('access_token')) {
+            token = data['access_token'];
+          }
+        }
+
+        // Store token if found and status is successful (or no status field exists)
+        if (token != null && (!hasStatus || statusValue)) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(tokenKey, token);
+        }
       }
+
+      return response;
     } catch (e) {
-      throw Exception('Login error: $e');
+      _handleError(e);
+      rethrow;
     }
   }
 
-  /// Logs out the user and clears stored credentials
-  /// Returns true if logout was successful
-  Future<bool> logout() async {
+  /// Logout the current user
+  Future<Response> logout({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final token = await _secureStorage.read(key: tokenKey);
+      final formData = FormData.fromMap({'email': email, 'password': password});
 
-      final response = await _dio.post(
-        baseUrl + logoutEndpoint,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('$baseUrl/logout', data: formData);
 
+      // If successful, remove the stored token
       if (response.statusCode == 200) {
-        // Clear all stored credentials
-        await _secureStorage.deleteAll();
-        return true;
-      } else {
-        return false;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(tokenKey);
       }
+
+      return response;
     } catch (e) {
-      // Clear tokens even if API call fails
-      await _secureStorage.deleteAll();
-      return false;
+      _handleError(e);
+      rethrow;
     }
   }
 
-  /// Resets user password with old and new password
-  /// Returns true if password reset was successful
-  Future<bool> resetPassword(String oldPassword, String newPassword) async {
+  /// Reset password with old and new password
+  Future<Response> resetPassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
     try {
-      final token = await _secureStorage.read(key: tokenKey);
+      final formData = FormData.fromMap({
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
 
       final response = await _dio.post(
-        baseUrl + resetPasswordEndpoint,
-        data: {'old_password': oldPassword, 'new_password': newPassword},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        '$baseUrl/reset-password',
+        data: formData,
       );
 
-      return response.statusCode == 200;
+      return response;
     } catch (e) {
-      throw Exception('Password reset error: $e');
+      _handleError(e);
+      rethrow;
     }
   }
 
-  /// Changes user password with new password only
-  /// Returns true if password change was successful
-  Future<bool> changePassword(String newPassword) async {
+  /// Change password with new password
+  Future<Response> changePassword({required String newPassword}) async {
     try {
-      final token = await _secureStorage.read(key: tokenKey);
+      final formData = FormData.fromMap({'password': newPassword});
 
       final response = await _dio.post(
-        baseUrl + resetPasswordEndpoint,
-        data: {'password': newPassword},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        '$baseUrl/change-password',
+        data: formData,
       );
 
-      return response.statusCode == 200;
+      return response;
     } catch (e) {
-      throw Exception('Password change error: $e');
+      _handleError(e);
+      rethrow;
     }
   }
 
-  /// Checks if user is currently logged in
-  /// Returns true if valid token exists
+  /// Get the stored authentication token
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(tokenKey);
+  }
+
+  /// Check if the user is logged in
   Future<bool> isLoggedIn() async {
-    final token = await _secureStorage.read(key: tokenKey);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(tokenKey);
     return token != null && token.isNotEmpty;
   }
 
-  /// Gets the user's role ID from secure storage
-  /// Returns role ID if available, null otherwise
-  Future<int?> getUserRoleId() async {
-    final roleId = await _secureStorage.read(key: roleIdKey);
-    return roleId != null ? int.parse(roleId) : null;
+  /// Simple logout that just clears the stored token
+  Future<void> logoutLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(tokenKey);
   }
 
-  /// Gets the stored authentication token
-  /// Returns token if available, null otherwise
-  Future<String?> getToken() async {
-    return await _secureStorage.read(key: tokenKey);
+  /// Handle errors and provide clean error messages
+  void _handleError(dynamic e) {
+    if (e is DioException) {
+      if (e.response != null) {
+        final responseData = e.response?.data;
+        final errorMessage =
+            responseData is Map ? responseData['message'] : null;
+        throw Exception(errorMessage ?? 'Request failed');
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception(
+          'Connection timeout. Please check your internet connection.',
+        );
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception(
+          'Server is taking too long to respond. Please try again later.',
+        );
+      } else if (e.type == DioExceptionType.sendTimeout) {
+        throw Exception(
+          'Request timeout. Please check your internet connection.',
+        );
+      } else {
+        throw Exception(e.message ?? 'An error occurred');
+      }
+    } else {
+      throw Exception('An unexpected error occurred: $e');
+    }
   }
 }
