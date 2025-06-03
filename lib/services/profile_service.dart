@@ -26,34 +26,138 @@ class ProfileService {
     baseUrl = url;
   }
 
-  /// Get user profile
-  /// Automatically retrieves token from shared preferences
+  /// Get user profile with extensive debugging
   Future<UserProfile?> getProfile() async {
     try {
+
+      // Get token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(tokenKey);
-      if (token == null) {
+
+      if (token != null) {
+      }
+
+      if (token == null || token.isEmpty) {
         throw Exception('No authentication token found');
       }
 
-      final response = await _dio.get(
-        '$baseUrl/profile',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+
+      // Configure Dio with debugging
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+
+      // Add interceptor for debugging
+      _dio.interceptors.clear();
+      _dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.next(options);
+          },
+          onResponse: (response, handler) {
+            handler.next(response);
+          },
+          onError: (error, handler) {
+            if (error.response != null) {
+            }
+            handler.next(error);
+          },
+        ),
       );
 
-      if (response.statusCode == 200 && response.data['status'] == true) {
-        return UserProfile.fromJson(response.data['data']);
+      final response = await _dio.get(
+        '$baseUrl/profile',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+
+      // Check if response is successful
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        // Handle different response structures
+        if (responseData is Map<String, dynamic>) {
+
+          // Check for status field
+          if (responseData.containsKey('status')) {
+            final status = responseData['status'];
+
+            // Handle different status types
+            bool isSuccess = false;
+            if (status is bool) {
+              isSuccess = status;
+            } else if (status is String) {
+              isSuccess = status.toLowerCase() == 'true' || status == '1';
+            } else if (status is int) {
+              isSuccess = status == 1;
+            }
+
+
+            if (!isSuccess) {
+              final message = responseData['message'] ?? 'Request failed';
+              throw Exception(message);
+            }
+          }
+
+          // Extract data
+          dynamic profileData;
+          if (responseData.containsKey('data')) {
+            profileData = responseData['data'];
+          } else {
+            profileData = responseData;
+          }
+
+          if (profileData != null && profileData is Map<String, dynamic>) {
+            final profile = UserProfile.fromJson(profileData);
+            return profile;
+          } else {
+            throw Exception('Invalid profile data structure');
+          }
+        } else {
+          throw Exception('Invalid response format');
+        }
       } else {
-        throw Exception(response.data['message'] ?? 'Failed to load profile');
+        throw Exception('HTTP ${response.statusCode}: Failed to load profile');
       }
     } catch (e) {
+
+      if (e is DioException) {
+      }
+
       _handleError(e);
       rethrow;
     }
   }
 
-  /// Get user profile with explicit token
-  /// For backward compatibility
+  /// Test connection to API
+  Future<void> testConnection() async {
+    try {
+    // ignore: empty_catches
+    } catch (e) {
+    }
+  }
+
+  /// Check if token exists and is valid format
+  Future<Map<String, dynamic>> debugToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(tokenKey);
+
+    return {
+      'exists': token != null,
+      'length': token?.length ?? 0,
+      'preview': token != null && token.length > 10
+          ? '${token.substring(0, 10)}...'
+          : token,
+      'isEmpty': token?.isEmpty ?? true,
+    };
+  }
+
+  /// Get user profile with explicit token (for testing)
   Future<Response> getProfileWithToken(String token) async {
     try {
       final response = await _dio.get(
@@ -69,7 +173,6 @@ class ProfileService {
   }
 
   /// Update user profile
-  /// Requires authentication token and profile data
   Future<Response> updateProfile({
     required String token,
     required Map<String, dynamic> data,
@@ -130,7 +233,7 @@ class ProfileService {
       if (e.response != null) {
         final responseData = e.response?.data;
         final errorMessage =
-            responseData is Map ? responseData['message'] : null;
+        responseData is Map ? responseData['message'] : null;
         throw Exception(errorMessage ?? 'Request failed');
       } else if (e.type == DioExceptionType.connectionTimeout) {
         throw Exception(

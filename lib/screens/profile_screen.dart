@@ -1,339 +1,446 @@
-/// Profile screen that displays user information and allows profile management.
-/// Shows personal details, contact information, and account details.
-library;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../services/profile_service.dart';
-import '../models/user_profile.dart';
-import 'edit_profile_screen.dart';
+import '../services/auth_service.dart';
+import '../screens/change_password_screen.dart';
+import '../widgets/app_drawer.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+/// Modern Profile Screen with responsive design and comprehensive error handling
+/// Displays user profile information with form fields for editing
+class ModernProfileScreen extends StatefulWidget {
+  const ModernProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ModernProfileScreen> createState() => _ModernProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  // Service instance for profile operations
+class _ModernProfileScreenState extends State<ModernProfileScreen> {
+  // Service instances for API calls
   final ProfileService _profileService = ProfileService();
+  final AuthService _authService = AuthService();
 
-  // State variables
-  UserProfile? _userProfile;
-  bool _isLoading = true;
-  String _error = '';
+  // Text controllers for form fields - manage user input
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _academicIdController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _nationalIdController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+
+  // State management variables
+  bool _isLoading = true; // Controls loading spinner visibility
+  String? _errorMessage; // Stores error messages for display
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    // Initialize profile data loading on screen creation
+    _checkTokenAndLoadProfile();
   }
 
-  /// Loads the user's profile information from the profile service
-  Future<void> _loadUserProfile() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
-
+  /// Validates user authentication and loads profile data
+  /// Checks if user is logged in before attempting to load profile
+  Future<void> _checkTokenAndLoadProfile() async {
     try {
+      // Verify user authentication status
+      final isLoggedIn = await _authService.isLoggedIn();
+
+      if (!isLoggedIn) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'User is not logged in. Please log in first.';
+        });
+        return;
+      }
+
+      // Test API connectivity before proceeding
+      await _profileService.testConnection();
+
+      // Load user profile data
+      await _loadProfile();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Error checking login status: ${e.toString()}';
+      });
+    }
+  }
+
+  /// Fetches user profile data from API and populates form fields
+  /// Handles loading states and error scenarios
+  Future<void> _loadProfile() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // Fetch profile data from service
       final profile = await _profileService.getProfile();
 
-      if (mounted) {
+      if (profile != null) {
+        // Populate form controllers with profile data
         setState(() {
-          _userProfile = profile;
+          _nameController.text = profile.name ?? '';
+          _academicIdController.text = profile.academicId ?? '';
+          _emailController.text = profile.email ?? '';
+          _phoneController.text = profile.phone ?? '';
+          _nationalIdController.text = profile.nationalId ?? '';
+          // Use formatted date if available, fallback to raw date
+          _dobController.text =
+              profile.formattedBirthDate ?? profile.birthDate ?? '';
+          _addressController.text = profile.address ?? '';
           _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'User data not found';
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = 'Failed to load profile: $e';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load data: ${e.toString()}';
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    // Clean up text controllers to prevent memory leaks
+    _nameController.dispose();
+    _academicIdController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _nationalIdController.dispose();
+    _dobController.dispose();
+    _addressController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+      // Navigation drawer for app-wide navigation
+      drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor: Colors.indigo,
-        actions: [
-          // Edit profile button in app bar
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.of(context)
-                  .push(
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              EditProfileScreen(userProfile: _userProfile!),
-                    ),
-                  )
-                  .then((_) => _loadUserProfile());
-            },
-          ),
-        ],
+        toolbarHeight: 100, // Increased height for logo display
+        centerTitle: true,
+        title: Image.asset(
+          'assets/image/Screenshot 2025-05-20 042959.png',
+          height: 100, // Logo height matching toolbar
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0, // Flat design without shadow
       ),
       body:
           _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error.isNotEmpty
-              ? _buildErrorView()
-              : _buildProfileView(),
-    );
-  }
-
-  /// Builds the error view when profile loading fails
-  Widget _buildErrorView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 80, color: Colors.red.shade300),
-            const SizedBox(height: 16),
-            Text(
-              'Error',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.red.shade700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loadUserProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text(
-                'Try Again',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Builds the main profile view with user information
-  Widget _buildProfileView() {
-    if (_userProfile == null) {
-      return const Center(child: Text('No profile data available'));
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile header with image and basic information
-          Center(
-            child: Column(
-              children: [
-                // Profile picture or initial avatar
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.indigo.shade100,
-                  backgroundImage:
-                      _userProfile?.image != null
-                          ? NetworkImage(_userProfile!.image!)
-                          : null,
-                  child:
-                      _userProfile?.image == null
-                          ? Text(
-                            _userProfile?.name.isNotEmpty == true
-                                ? _userProfile!.name[0].toUpperCase()
-                                : 'S',
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.indigo.shade800,
-                            ),
-                          )
-                          : null,
-                ),
-                const SizedBox(height: 16),
-
-                // User's full name
-                Text(
-                  _userProfile!.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                // User's role badge
-                Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _userProfile!.roleName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.indigo.shade800,
+              ? const Center(
+                // Loading state with spinner and message
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text(
+                      'Loading data...',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
                     ),
-                  ),
+                  ],
                 ),
-
-                // Academic ID display
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'ID: ${_userProfile!.academicId}',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Contact information section
-          _buildSectionHeader('Contact Information'),
-          _buildInfoItem(Icons.email, 'Email', _userProfile!.email),
-          _buildInfoItem(Icons.phone, 'Phone', _userProfile!.phone),
-
-          const SizedBox(height: 24),
-
-          // Personal information section
-          _buildSectionHeader('Personal Information'),
-          _buildInfoItem(Icons.badge, 'National ID', _userProfile!.nationalId),
-          _buildInfoItem(
-            Icons.calendar_today,
-            'Birth Date',
-            _formatDate(_userProfile!.birthDate),
-          ),
-          _buildInfoItem(Icons.location_on, 'Address', _userProfile!.address),
-
-          const SizedBox(height: 24),
-
-          // Account information section
-          _buildSectionHeader('Account Information'),
-          _buildInfoItem(
-            Icons.access_time,
-            'Created On',
-            _formatDate(_userProfile!.createdAt),
-          ),
-          _buildInfoItem(
-            Icons.update,
-            'Last Updated',
-            _formatDate(_userProfile!.updatedAt),
-          ),
-
-          const SizedBox(height: 30),
-
-          // Edit profile button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                EditProfileScreen(userProfile: _userProfile!),
+              )
+              : _errorMessage != null
+              ? Center(
+                // Error state with icon, message, and retry button
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
                       ),
-                    )
-                    .then((_) => _loadUserProfile());
-              },
-              icon: const Icon(Icons.edit),
-              label: const Text('Edit Profile'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, color: Colors.red),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _checkTokenAndLoadProfile,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              : SingleChildScrollView(
+                // Main content area with profile form
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Section header
+                    const Text(
+                      'PROFILE',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF666666),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // User name field - editable
+                    _buildTextField('Name', _nameController),
+                    const SizedBox(height: 12),
+
+                    // Academic ID field - read-only for security
+                    _buildTextField(
+                      'Academic ID',
+                      _academicIdController,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Email field - editable
+                    _buildTextField('Email', _emailController),
+                    const SizedBox(height: 12),
+
+                    // Phone number field - editable
+                    _buildTextField('Phone Number', _phoneController),
+                    const SizedBox(height: 12),
+
+                    // National ID field - editable
+                    _buildTextField('National ID', _nationalIdController),
+                    const SizedBox(height: 12),
+
+                    // Date of birth field - special date picker field
+                    _buildDateField(),
+                    const SizedBox(height: 12),
+
+                    // Address field - multiline text input
+                    _buildTextField(
+                      'Home Address',
+                      _addressController,
+                      maxLines: 1,
+                      icon: Icons.edit,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Password field - masked display only
+                    _buildPasswordField(),
+                    const SizedBox(height: 40),
+
+                    // Navigation button to password change screen
+                    Center(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const ChangePasswordScreen(),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(color: Color(0xFFE0E0E0)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Change Password',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  /// Builds a reusable text field widget with consistent styling
+  /// [label] - Field label text
+  /// [controller] - Text controller for field value
+  /// [enabled] - Whether field is editable (default: true)
+  /// [maxLines] - Number of text lines (default: 1)
+  /// [icon] - Optional suffix icon
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool enabled = true,
+    int maxLines = 1,
+    IconData? icon,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Field label
         Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.indigo.shade800,
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
           ),
         ),
-        Divider(color: Colors.indigo.shade200, thickness: 2),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        // Text input field with consistent styling
+        TextFormField(
+          controller: controller,
+          enabled: enabled,
+          maxLines: maxLines,
+          style: TextStyle(
+            fontSize: 14,
+            color: enabled ? Colors.black : Colors.grey[600],
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            // Border styling for different states
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF00BCD4), width: 2),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            // Optional suffix icon
+            suffixIcon:
+                icon != null
+                    ? Icon(icon, color: Colors.grey[600], size: 20)
+                    : null,
+            // Placeholder text for empty disabled fields
+            hintText: controller.text.isEmpty && !enabled ? 'No data' : null,
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildInfoItem(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.indigo.shade50,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Colors.indigo.shade700, size: 20),
+  /// Builds a specialized date field with calendar icon
+  /// Used for date of birth display (read-only)
+  Widget _buildDateField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Date Of Birth',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontSize: 16)),
-              ],
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _dobController,
+          enabled: false, // Read-only field
+          readOnly: true,
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          decoration: InputDecoration(
+            // Date format placeholder
+            hintText: _dobController.text.isEmpty ? 'dd/mm/yyyy' : null,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
             ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            // Calendar icon to indicate date field
+            suffixIcon: Icon(
+              Icons.calendar_today,
+              color: Colors.grey[600],
+              size: 20,
+            ),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  String _formatDate(String dateString) {
-    try {
-      final DateTime dateTime = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy').format(dateTime);
-    } catch (e) {
-      return dateString;
-    }
+  /// Builds a password field with masked text display
+  /// Shows asterisks instead of actual password for security
+  Widget _buildPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          obscureText: true, // Hide actual text input
+          enabled: false, // Read-only display
+          initialValue: '********************', // Placeholder asterisks
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            // Eye icon to indicate password field
+            suffixIcon: Icon(
+              Icons.remove_red_eye,
+              color: Colors.grey[600],
+              size: 20,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

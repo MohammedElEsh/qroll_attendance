@@ -1,5 +1,6 @@
-/// Login screen that handles user authentication.
-/// Provides clean UI for student login with national ID and password.
+// / Login screen that handles user authentication.
+// / Provides clean UI for student login with national ID and password.
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

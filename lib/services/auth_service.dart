@@ -1,5 +1,5 @@
-/// Authentication service for student users.
-/// Handles login, logout, password reset, and password change operations.
+// / Authentication service for student users.
+// / Handles login, logout, password reset, and password change operations.
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';

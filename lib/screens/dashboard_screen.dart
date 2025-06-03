@@ -1,9 +1,7 @@
-/// Main dashboard screen displayed after successful login.
-/// Shows user profile information and provides access to key features.
-library;
+// / Main dashboard screen displayed after successful login.
+// / Shows user profile information and provides access to key features.
 
 import 'package:flutter/material.dart';
-// import '../services/auth_service.dart' as auth;
 import '../services/profile_service.dart';
 import '../models/user_profile.dart';
 import '../widgets/app_drawer.dart';
@@ -145,9 +143,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     child:
                                         _userProfile?.image == null
                                             ? Text(
-                                              _userProfile?.name.isNotEmpty ==
-                                                      true
-                                                  ? _userProfile!.name[0]
+                                              (_userProfile?.name?.isNotEmpty ??
+                                                      false)
+                                                  ? _userProfile!.name![0]
                                                       .toUpperCase()
                                                   : 'S',
                                               style: TextStyle(
@@ -293,8 +291,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               subtitle: 'View & edit details',
                               color: Colors.orange,
                               onTap:
-                                  () =>
-                                      _navigateToScreen(const ProfileScreen()),
+                                  () => _navigateToScreen(
+                                    const ModernProfileScreen(),
+                                  ),
                             ),
                             _buildFeatureCard(
                               icon: Icons.lock,
