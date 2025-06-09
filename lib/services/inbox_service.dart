@@ -1,5 +1,9 @@
+/// Inbox service for messaging and notifications.
+/// Handles sending messages, taking actions, and retrieving inbox data.
+library;
+
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InboxService {
   // Singleton instance
@@ -14,14 +18,11 @@ class InboxService {
   // HTTP client for API requests
   final Dio _dio = Dio();
 
-  // Secure storage for tokens
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-
   // Storage key for auth token
   static const String tokenKey = 'auth_token';
 
   // Configurable base URL
-  String baseUrl = 'https://api.qrollattendance.com/api';
+  String baseUrl = 'https://azure-hawk-973666.hostingersite.com/api';
 
   /// Configure the base URL for the API
   void configureBaseUrl(String url) {
@@ -30,10 +31,11 @@ class InboxService {
 
   /// Get the stored authentication token
   Future<String?> getToken() async {
-    return await _secureStorage.read(key: tokenKey);
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(tokenKey);
   }
 
-  /// Send a message to another user
+  /// Send a message to another user (POST /inbox)
   Future<Response> sendMessage({
     required int receiverId,
     required String message,
@@ -46,6 +48,14 @@ class InboxService {
         'receiver_id': receiverId,
         'message': message,
       });
+
+      // Configure Dio with timeout and headers
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+      _dio.options.headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+      };
 
       final response = await _dio.post(
         '$baseUrl/inbox',
@@ -62,9 +72,9 @@ class InboxService {
     }
   }
 
-  /// Take action on excessive absence
+  /// Take action on excessive absence (POST /take-action)
   Future<Response> takeAction({
-    required String type,
+    required String type, // 'lecture' or 'section'
     required double absencePercentage,
     required int courseId,
     required String message,
@@ -80,11 +90,73 @@ class InboxService {
         'message': message,
       });
 
+      // Configure Dio with timeout and headers
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+      _dio.options.headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+      };
+
       final response = await _dio.post(
         '$baseUrl/take-action',
         data: formData,
         options: Options(
           headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+        ),
+      );
+
+      return response;
+    } catch (e) {
+      _handleError(e);
+      rethrow;
+    }
+  }
+
+  /// Get student inbox messages (GET /student/inbox)
+  Future<Response> getInboxMessages() async {
+    try {
+      final token = await getToken();
+
+      // Configure Dio with timeout and headers
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+
+      final response = await _dio.get(
+        '$baseUrl/student/inbox',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      return response;
+    } catch (e) {
+      _handleError(e);
+      rethrow;
+    }
+  }
+
+  /// Get specific inbox message (GET /student/inbox/{id})
+  Future<Response> getInboxMessage(int messageId) async {
+    try {
+      final token = await getToken();
+
+      // Configure Dio with timeout and headers
+      _dio.options.connectTimeout = const Duration(seconds: 30);
+      _dio.options.receiveTimeout = const Duration(seconds: 30);
+
+      final response = await _dio.get(
+        '$baseUrl/student/inbox/$messageId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
         ),
       );
 
