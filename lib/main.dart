@@ -1,6 +1,5 @@
-/// Entry point of the QRoll Attendance application.
-/// Initializes the app with Riverpod state management and sets up the main UI.
-library;
+// / Entry point of the QRoll Attendance application.
+// / Initializes the app with Riverpod state management and sets up the main UI.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

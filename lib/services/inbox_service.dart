@@ -1,6 +1,5 @@
-/// Inbox service for messaging and notifications.
-/// Handles sending messages, taking actions, and retrieving inbox data.
-library;
+// / Inbox service for messaging and notifications.
+// / Handles sending messages, taking actions, and retrieving inbox data.
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,7 +1,3 @@
-/// Initial screen shown when the app starts.
-/// Handles app initialization and authentication state check.
-library;
-
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/auth_service.dart';

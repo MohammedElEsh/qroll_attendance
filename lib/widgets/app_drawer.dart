@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/inbox_screen.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -216,8 +217,12 @@ class _AppDrawerState extends State<AppDrawer> {
             icon: Icons.inbox_outlined,
             title: 'Inbox',
             onTap: () {
-              // Handle inbox navigation
               Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const InboxScreen(),
+                ),
+              );
             },
           ),
 

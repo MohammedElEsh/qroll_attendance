@@ -1,11 +1,12 @@
+/// Modern Profile Screen with responsive design and comprehensive error handling
+/// Displays user profile information with form fields for editing
+
 import 'package:flutter/material.dart';
 import '../services/profile_service.dart';
 import '../services/auth_service.dart';
 import '../screens/change_password_screen.dart';
 import '../widgets/app_drawer.dart';
 
-/// Modern Profile Screen with responsive design and comprehensive error handling
-/// Displays user profile information with form fields for editing
 class ModernProfileScreen extends StatefulWidget {
   const ModernProfileScreen({super.key});
 
