@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/attendance_record.dart';
 
 class StudentService {
@@ -15,9 +15,6 @@ class StudentService {
   // HTTP client for API requests
   final Dio _dio = Dio();
 
-  // Secure storage for tokens
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-
   // Storage key for auth token
   static const String tokenKey = 'auth_token';
 
@@ -31,7 +28,8 @@ class StudentService {
 
   /// Get the stored authentication token
   Future<String?> getToken() async {
-    return await _secureStorage.read(key: tokenKey);
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(tokenKey);
   }
 
   /// Get all students
@@ -174,6 +172,12 @@ class StudentService {
   Future<Response> getStudentLectureAttendance(int courseId) async {
     try {
       final token = await getToken();
+      print('StudentService: Token exists: ${token != null}');
+      print('StudentService: Token length: ${token?.length ?? 0}');
+      print(
+        'StudentService: Making request to: $baseUrl/student/courses/$courseId/lectures-attendance',
+      );
+
       final response = await _dio.get(
         '$baseUrl/student/courses/$courseId/lectures-attendance',
         options: Options(
@@ -192,6 +196,12 @@ class StudentService {
   Future<Response> getStudentSectionAttendance(int courseId) async {
     try {
       final token = await getToken();
+      print('StudentService: Section Token exists: ${token != null}');
+      print('StudentService: Section Token length: ${token?.length ?? 0}');
+      print(
+        'StudentService: Making request to: $baseUrl/student/courses/$courseId/sections-attendance',
+      );
+
       final response = await _dio.get(
         '$baseUrl/student/courses/$courseId/sections-attendance',
         options: Options(
