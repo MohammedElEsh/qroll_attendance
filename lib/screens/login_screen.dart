@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../screens/dashboard_screen.dart';
-import '../widgets/custom_textfield.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -207,130 +206,116 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // App logo and branding
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo.shade50,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.indigo.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Logo section with reduced spacing
+                const SizedBox(height: 20),
+                Center(
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/image/Screenshot 2025-05-20 042959.png',
+                        height: 60,
+                      ),
+                      const SizedBox(height: 48),
+                      const Text(
+                        'Login To Your Account',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // App logo
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.indigo.shade700,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.school,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'QRoll Attendance',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo.shade900,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'University Student Portal',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.indigo.shade600,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                  const SizedBox(height: 40),
+                ),
 
-                  // Welcome title
-                  Text(
-                    'Student Login',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.indigo.shade900,
+                // Email Field
+                const Text(
+                  'Email',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'johndoe@gmail.com',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
-                    textAlign: TextAlign.center,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF1A9BD7)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter your credentials to access your account',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
 
-                  // National ID input field with validation
-                  CustomTextField(
-                    controller: _emailController,
-                    labelText: 'National ID',
-                    hintText: 'Enter your national ID',
-                    prefixIcon: Icons.badge_outlined,
-                    keyboardType: TextInputType.text,
-                    autofocus: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your national ID';
-                      }
-                      if (value.trim().length < 8) {
-                        return 'National ID must be at least 8 characters';
-                      }
-                      return null;
-                    },
+                // Password Field
+                const Text(
+                  'password',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
                   ),
-                  const SizedBox(height: 16),
-
-                  // Password input field with toggle visibility
-                  CustomTextField(
-                    controller: _passwordController,
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 4) {
-                        return 'Password must be at least 4 characters';
-                      }
-                      return null;
-                    },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: '******************',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF1A9BD7)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: Colors.grey.shade600,
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.grey,
                       ),
                       onPressed: () {
                         setState(() {
@@ -338,49 +323,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         });
                       },
                     ),
-                    onSubmitted: (_) => _isLoading ? null : _login(),
                   ),
-                  const SizedBox(height: 30),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 40),
 
-                  // Login button with loading state
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo.shade700,
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        disabledBackgroundColor: Colors.grey.shade300,
+                // Login Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF181C36),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                              : const Text(
-                                'Login',
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text(
+                                'login',
                                 style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                    ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward, size: 20),
+                            ],
+                          ),
                   ),
-                  const SizedBox(height: 30),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

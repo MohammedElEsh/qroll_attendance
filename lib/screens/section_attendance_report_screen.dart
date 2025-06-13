@@ -103,67 +103,120 @@ class _SectionAttendanceReportScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 100,
+        toolbarHeight: 80,
         centerTitle: true,
         title: Padding(
-          padding: const EdgeInsets.only(top: 47, left: 123),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Image.asset(
-              'assets/image/Screenshot 2025-05-20 042959.png',
-              width: 147,
-              height: 46,
-            ),
+          padding: const EdgeInsets.only(top: 8),
+          child: Image.asset(
+            'assets/image/Screenshot 2025-05-20 042959.png',
+            height: 80,
+            fit: BoxFit.contain,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
       ),
-      body: Column(
-        children: [
-          // Course header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.green.shade800, Colors.green.shade600],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body:Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [          // Breadcrumb navigation
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  'Section Attendance Report',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  'COURCES',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 8),
                 Text(
-                  widget.course.displayName,
-                  style: const TextStyle(fontSize: 16, color: Colors.white70),
-                ),
-                if (widget.course.code != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Course Code: ${widget.course.code}',
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  '>',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
                   ),
-                ],
+                ),
+                Text(
+                  widget.course.name ?? '',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  '>',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  'SECTION ATTENDENCE REPORT',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
+          
+          const SizedBox(height: 16),
+            // Table header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
+            ),            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'SECTION\nNUMBER',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 12,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'DATE',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'STATUS',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),),
 
           // Content area
           Expanded(
@@ -188,10 +241,10 @@ class _SectionAttendanceReportScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
+            Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'Error Loading Data',
+              'No section Data',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -208,7 +261,7 @@ class _SectionAttendanceReportScreenState
             ElevatedButton(
               onPressed: _loadSectionAttendance,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Retry'),
@@ -275,10 +328,7 @@ class _SectionAttendanceReportScreenState
     // Extract section information from API response
     final String sectionId =
         section['section_id']?.toString() ?? section['id']?.toString() ?? '';
-    final String sectionName =
-        section['name']?.toString() ??
-        section['title']?.toString() ??
-        'Section $sectionId';
+  
     final String sectionDate =
         section['date']?.toString() ?? section['created_at']?.toString() ?? '';
     final String attendanceStatus =
@@ -296,34 +346,27 @@ class _SectionAttendanceReportScreenState
 
     // Determine status color
     Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.help_outline;
 
     switch (attendanceStatus.toLowerCase()) {
       case 'present':
       case 'attended':
         statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
         break;
       case 'absent':
       case 'missed':
         statusColor = Colors.red;
-        statusIcon = Icons.cancel;
         break;
       case 'late':
         statusColor = Colors.orange;
-        statusIcon = Icons.access_time;
         break;
       default:
         statusColor = Colors.grey;
-        statusIcon = Icons.help_outline;
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 7),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(13),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -331,37 +374,33 @@ class _SectionAttendanceReportScreenState
               children: [
                 Expanded(
                   child: Text(
-                    sectionName,
+                    sectionId,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      fontSize: 14,
+                      color: Colors.black54,
                     ),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 6,
+                    vertical: 4,
                   ),
+                  constraints: const BoxConstraints(maxWidth: 120),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 16, color: statusColor),
-                      const SizedBox(width: 4),
-                      Text(
-                        attendanceStatus.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    attendanceStatus.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
