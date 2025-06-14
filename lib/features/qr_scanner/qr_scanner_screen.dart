@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:convert';
 import 'qr_result_screen.dart';
-// import 'package:dio/dio.dart';
+import '../../services/student_service.dart';
+import '../../utils/qr_test_helper.dart';
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
@@ -14,6 +16,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     with WidgetsBindingObserver {
   // Camera controller for QR scanning
   late final MobileScannerController _controller;
+
+  // Student service for API calls
+  final StudentService _studentService = StudentService();
 
   // State variables for scanner controls
   bool _isProcessing = false;
@@ -99,26 +104,71 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   /// Processes the scanned QR code and marks attendance
   void _processQRCode(String qrCode) async {
     try {
-      // TODO: Here you would implement the actual API call to process the QR code
-      // For now, we just show a success result
 
-      // Navigate to the result screen with mock success data
+      // Parse QR code data
+      Map<String, dynamic> qrData;
+      try {
+        qrData = jsonDecode(qrCode);
+      } catch (e) {
+        throw Exception('Invalid QR code format');
+      }
+
+      // Validate required fields
+      if (!qrData.containsKey('lecture_id') ||
+          !qrData.containsKey('course_id') ||
+          !qrData.containsKey('timestamp') ||
+          !qrData.containsKey('signature')) {
+        throw Exception('QR code missing required fields');
+      }
+
+
+      // Call the attendance API
+      final response = await _studentService.scanAttendance(qrData);
+
+
+      // Check if attendance was marked successfully
+      bool success = false;
+      String message = 'Attendance marked successfully!';
+
+      if (response.statusCode == 200) {
+        if (response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          success =
+              data['success'] == true ||
+              data['status'] == 'success' ||
+              data['status'] == true ||
+              data['status'] == 200;
+
+          if (data.containsKey('message')) {
+            message = data['message'].toString();
+          }
+        } else {
+          success = true; // Assume success if 200 status
+        }
+      }
+
+
+      // Navigate to result screen
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder:
                 (context) => QRResultScreen(
-                  success: true,
-                  message: 'Attendance marked successfully!',
+                  success: success,
+                  message: success ? message : 'Failed to mark attendance',
                   details: {
                     'qr_data': qrCode,
+                    'lecture_id': qrData['lecture_id'],
+                    'course_id': qrData['course_id'],
                     'timestamp': DateTime.now().toString(),
+                    'api_response': response.data,
                   },
                 ),
           ),
         );
       }
     } catch (e) {
+
       // In case of error, resume the camera
       setState(() {
         _isProcessing = false;
@@ -129,8 +179,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error processing QR code: $e'),
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -143,6 +194,18 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       appBar: AppBar(
         title: const Text('Scan QR Code'),
         actions: [
+          // Test QR button for development
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            onPressed: () {
+              // Run QR tests first
+              QRTestHelper.printTestResults();
+
+              // Test with valid QR code
+              final testQRCode = QRTestHelper.generateTestQRCode();
+              _processQRCode(testQRCode);
+            },
+          ),
           // Camera flip button
           IconButton(
             icon: Icon(_isFrontCamera ? Icons.camera_rear : Icons.camera_front),

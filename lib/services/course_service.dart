@@ -43,8 +43,6 @@ class CourseService {
       // Get token from SharedPreferences
       final token = await getToken();
 
-      print('CourseService: Token exists: ${token != null}');
-      print('CourseService: Token length: ${token?.length ?? 0}');
 
       if (token == null || token.isEmpty) {
         throw Exception('No authentication token found');
@@ -54,7 +52,6 @@ class CourseService {
       _dio.options.connectTimeout = const Duration(seconds: 30);
       _dio.options.receiveTimeout = const Duration(seconds: 30);
 
-      print('CourseService: Making request to: $baseUrl/my-courses');
 
       final response = await _dio.get(
         '$baseUrl/my-courses',
@@ -68,12 +65,6 @@ class CourseService {
       );
 
       // Debug: Print response details
-      print('CourseService: Response status: ${response.statusCode}');
-      print('CourseService: Response data type: ${response.data.runtimeType}');
-      print(
-        'CourseService: Response data length: ${response.data is List ? response.data.length : 'N/A'}',
-      );
-      print('CourseService: Response data: ${response.data}');
 
       // Check if response is successful
       if (response.statusCode == 200) {
@@ -145,15 +136,13 @@ class CourseService {
         throw Exception('HTTP ${response.statusCode}: Failed to load courses');
       }
     } catch (e) {
-      print('CourseService: Error occurred: $e');
-      print('CourseService: Error type: ${e.runtimeType}');
       _handleError(e);
       rethrow;
     }
   }
 
   /// Get student's statistics
-  /// Returns comprehensive statistics about the student's academic performance
+  /// Returns statistics for dashboard display
   Future<StudentStatistics?> getMyStatistics() async {
     try {
       // Get token from SharedPreferences
@@ -163,12 +152,13 @@ class CourseService {
         throw Exception('No authentication token found');
       }
 
+
       // Configure Dio with timeout and headers
       _dio.options.connectTimeout = const Duration(seconds: 30);
       _dio.options.receiveTimeout = const Duration(seconds: 30);
 
       final response = await _dio.get(
-        '$baseUrl/my-statistics',
+        '$baseUrl/my-stats',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -178,47 +168,40 @@ class CourseService {
         ),
       );
 
+
       // Check if response is successful
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        // Handle different response structures
+        // Handle your specific API response format
         if (responseData is Map<String, dynamic>) {
-          // Check for status field
+          // Check for status field (should be 200 for success)
           if (responseData.containsKey('status')) {
             final status = responseData['status'];
 
-            // Handle different status types
-            bool isSuccess = false;
-            if (status is bool) {
-              isSuccess = status;
-            } else if (status is String) {
-              isSuccess = status.toLowerCase() == 'true' || status == '1';
-            } else if (status is int) {
-              isSuccess = status == 1;
-            }
-
-            if (!isSuccess) {
+            // Your API returns status: 200 for success
+            if (status != 200) {
               final message = responseData['message'] ?? 'Request failed';
               throw Exception(message);
             }
           }
 
-          // Extract data
-          dynamic statisticsData;
-          if (responseData.containsKey('data')) {
-            statisticsData = responseData['data'];
-          } else if (responseData.containsKey('statistics')) {
-            statisticsData = responseData['statistics'];
-          } else {
-            statisticsData = responseData;
-          }
+          // Extract data from your API format: {"status": 200, "data": {"courses_count": 8}}
+          if (responseData.containsKey('data') &&
+              responseData['data'] is Map<String, dynamic>) {
+            final data = responseData['data'] as Map<String, dynamic>;
 
-          if (statisticsData != null &&
-              statisticsData is Map<String, dynamic>) {
-            return StudentStatistics.fromJson(statisticsData);
+
+            // Create StudentStatistics object with courses_count from API
+            final statisticsData = <String, dynamic>{
+              'courses_count': data['courses_count'], // Direct mapping from API
+            };
+
+            final result = StudentStatistics.fromJson(statisticsData);
+
+            return result;
           } else {
-            throw Exception('Invalid statistics data structure');
+            throw Exception('Invalid data structure in response');
           }
         } else {
           throw Exception('Invalid response format');
@@ -273,7 +256,7 @@ class CourseService {
       }
 
       final response = await _dio.get(
-        '$baseUrl/my-statistics',
+        '$baseUrl/my-stats',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',

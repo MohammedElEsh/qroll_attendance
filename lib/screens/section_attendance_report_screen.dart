@@ -1,6 +1,6 @@
-/// Section Attendance Report Screen
-///
-/// Displays detailed attendance information for sections in a specific course
+// / Section Attendance Report Screen
+// /
+// / Displays detailed attendance information for sections in a specific course
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/student_service.dart';
@@ -39,8 +39,6 @@ class _SectionAttendanceReportScreenState
 
     try {
       final courseId = int.tryParse(widget.course.id ?? '0') ?? 0;
-      print('SectionAttendance: Course ID: $courseId');
-      print('SectionAttendance: Course Name: ${widget.course.name}');
 
       if (courseId == 0) {
         throw Exception('Invalid course ID: ${widget.course.id}');
@@ -54,42 +52,25 @@ class _SectionAttendanceReportScreenState
         setState(() {
           if (response.statusCode == 200) {
             // Debug: Print response details
-            print(
-              'SectionAttendance: Response data type: ${response.data.runtimeType}',
-            );
-            print('SectionAttendance: Response data: ${response.data}');
 
             if (response.data is List) {
               _sectionAttendance = response.data;
-              print(
-                'SectionAttendance: Found ${_sectionAttendance.length} section records',
-              );
             } else if (response.data is Map && response.data['data'] is List) {
               _sectionAttendance = response.data['data'];
-              print(
-                'SectionAttendance: Found ${_sectionAttendance.length} section records in data field',
-              );
             } else if (response.data is Map &&
                 response.data['sections'] is List) {
               _sectionAttendance = response.data['sections'];
-              print(
-                'SectionAttendance: Found ${_sectionAttendance.length} section records in sections field',
-              );
             } else {
               _sectionAttendance = [];
-              print('SectionAttendance: No valid data structure found');
             }
           } else {
             _error =
                 'Failed to load section attendance data (Status: ${response.statusCode})';
-            print('SectionAttendance: HTTP Error ${response.statusCode}');
           }
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('SectionAttendance: Error occurred: $e');
-      print('SectionAttendance: Error type: ${e.runtimeType}');
       if (mounted) {
         setState(() {
           _error = 'Failed to load section attendance: $e';
@@ -123,9 +104,10 @@ class _SectionAttendanceReportScreenState
           ),
         ),
       ),
-      body:Column(
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [          // Breadcrumb navigation
+        children: [
+          // Breadcrumb navigation
           Padding(
             padding: const EdgeInsets.all(16),
             child: Wrap(
@@ -134,55 +116,38 @@ class _SectionAttendanceReportScreenState
               children: [
                 Text(
                   'COURCES',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   '>',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   widget.course.name ?? '',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   '>',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   'SECTION ATTENDENCE REPORT',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-            // Table header
+          // Table header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.shade200,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Colors.grey.shade200, width: 1),
               ),
-            ),            child: Row(
+            ),
+            child: Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -199,24 +164,19 @@ class _SectionAttendanceReportScreenState
                   flex: 2,
                   child: Text(
                     'DATE',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ),
                 Expanded(
                   flex: 1,
                   child: Text(
                     'STATUS',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ),
               ],
-            ),),
+            ),
+          ),
 
           // Content area
           Expanded(
@@ -318,157 +278,91 @@ class _SectionAttendanceReportScreenState
         itemCount: _sectionAttendance.length,
         itemBuilder: (context, index) {
           final section = _sectionAttendance[index];
-          return _buildSectionCard(section);
+          return _buildSectionCard(section, index + 1);
         },
       ),
     );
   }
 
-  Widget _buildSectionCard(dynamic section) {
-    // Extract section information from API response
-    final String sectionId =
-        section['section_id']?.toString() ?? section['id']?.toString() ?? '';
-  
+  Widget _buildSectionCard(dynamic section, int number) {
+    // Extract section information from API response (new structure)
+    final sectionData = section['section'] ?? section;
     final String sectionDate =
-        section['date']?.toString() ?? section['created_at']?.toString() ?? '';
+        sectionData['created_at']?.toString() ??
+        sectionData['date']?.toString() ??
+        section['date']?.toString() ??
+        '';
     final String attendanceStatus =
         section['status']?.toString() ??
         section['attendance_status']?.toString() ??
         'Unknown';
-    final String sectionTime =
-        section['time']?.toString() ?? section['start_time']?.toString() ?? '';
-    final String location =
-        section['location']?.toString() ?? section['room']?.toString() ?? '';
-    final String instructor =
-        section['instructor']?.toString() ??
-        section['teacher']?.toString() ??
-        '';
 
-    // Determine status color
-    Color statusColor = Colors.grey;
-
+    // Determine status appearance
+    Color statusColor;
+    Color bgColor;
     switch (attendanceStatus.toLowerCase()) {
       case 'present':
       case 'attended':
         statusColor = Colors.green;
+        bgColor = Colors.green.withValues(alpha: 0.1);
         break;
       case 'absent':
       case 'missed':
         statusColor = Colors.red;
+        bgColor = Colors.red.withValues(alpha: 0.1);
         break;
       case 'late':
         statusColor = Colors.orange;
+        bgColor = Colors.orange.withValues(alpha: 0.1);
         break;
       default:
         statusColor = Colors.grey;
+        bgColor = Colors.grey.withValues(alpha: 0.1);
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 7),
       child: Padding(
-        padding: const EdgeInsets.all(13),
-        child: Column(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    sectionId,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  constraints: const BoxConstraints(maxWidth: 120),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    attendanceStatus.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
-                    ),
-                    softWrap: true,
-                    overflow: TextOverflow.visible,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: 50,
+              child: Text(
+                number.toString(),
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
             ),
-            const SizedBox(height: 12),
-            if (sectionDate.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatDate(sectionDate),
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                ],
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 80),
+                child: Text(
+                  _formatDate(sectionDate),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
               ),
-              const SizedBox(height: 8),
-            ],
-            if (sectionTime.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    sectionTime,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              constraints: const BoxConstraints(maxWidth: 120),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(height: 8),
-            ],
-            if (location.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    location,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                ],
+              child: Text(
+                attendanceStatus.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-            ],
-            if (instructor.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(Icons.person, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Instructor: $instructor',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ],
         ),
       ),
@@ -478,7 +372,7 @@ class _SectionAttendanceReportScreenState
   String _formatDate(String dateString) {
     try {
       final DateTime date = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy').format(date);
+      return DateFormat('dd/MM/yyyy').format(date);
     } catch (e) {
       return dateString;
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
@@ -25,12 +26,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
 
-    // Check if new password and confirm password match
-    if (_newPasswordController.text != _confirmPasswordController.text) {
-      _showErrorSnackBar('New password and confirm password do not match');
-      return;
-    }
-
     setState(() {
       _isLoading = true;
     });
@@ -43,24 +38,70 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
       if (!mounted) return;
 
-      if (response.statusCode == 200 && response.data['status'] == true) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password changed successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      // Handle different response scenarios
+      if (response.statusCode == 200) {
+        bool isSuccess = false;
+        String message = 'Password changed successfully';
 
-        // Navigate back to previous screen
-        Navigator.pop(context);
+        if (response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+
+          // Check for status field
+          if (data.containsKey('status')) {
+            isSuccess =
+                data['status'] == true ||
+                data['status'] == 'true' ||
+                data['status'] == 1;
+          } else {
+            // If no status field, assume success for 200 response
+            isSuccess = true;
+          }
+
+          // Get custom message if available
+          if (data.containsKey('message') && data['message'] != null) {
+            message = data['message'].toString();
+          }
+        } else {
+          // If response is not a map, assume success for 200 response
+          isSuccess = true;
+        }
+
+        if (isSuccess) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.green),
+          );
+
+          // Clear form fields
+          _oldPasswordController.clear();
+          _newPasswordController.clear();
+          _confirmPasswordController.clear();
+
+          // Navigate back to previous screen
+          Navigator.pop(context);
+        } else {
+          _showErrorSnackBar(
+            message.isNotEmpty ? message : 'Failed to change password',
+          );
+        }
       } else {
-        _showErrorSnackBar('Failed to change password');
+        _showErrorSnackBar('Server error: ${response.statusCode}');
       }
     } catch (e) {
       if (!mounted) return;
 
-      _showErrorSnackBar('Failed to change password: $e');
+      // Extract meaningful error message
+      String errorMessage = 'Failed to change password';
+      if (e.toString().contains('Authentication token not found')) {
+        errorMessage = 'Session expired. Please login again.';
+      } else if (e.toString().contains('Connection timeout')) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection.';
+      } else if (e.toString().contains('Request failed')) {
+        errorMessage = 'Invalid old password or server error.';
+      }
+
+      _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
         setState(() {
@@ -87,6 +128,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +140,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           'assets/image/Screenshot 2025-05-20 042959.png',
           height: 40,
         ),
-      ),      body: SingleChildScrollView(
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(12.0),
         child: Form(
           key: _formKey,
@@ -127,7 +170,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),              // Old Password Field
+              const SizedBox(height: 32), // Old Password Field
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -162,7 +205,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFF00BCD4), width: 2),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF00BCD4),
+                          width: 2,
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -170,7 +216,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureOldPassword ? Icons.visibility : Icons.visibility_off,
+                          _obscureOldPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: Colors.grey,
                         ),
                         onPressed: () {
@@ -223,7 +271,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFF00BCD4), width: 2),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF00BCD4),
+                          width: 2,
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -231,7 +282,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                          _obscureNewPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: Colors.grey,
                         ),
                         onPressed: () {
@@ -244,7 +297,73 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),              // Save Button
+              const SizedBox(height: 20),
+
+              // Confirm Password Field
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Confirm New Password',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your new password';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF00BCD4),
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32), // Save Button
               Padding(
                 padding: const EdgeInsets.only(top: 32),
                 child: Center(
@@ -265,23 +384,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                              : const Text(
+                                'Save Password',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'Save Password',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
                     ),
                   ),
                 ),

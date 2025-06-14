@@ -1,7 +1,7 @@
-/// Course Detail Screen
-///
-/// Displays detailed information about a specific course
-/// and provides access to course-related features
+// / Course Detail Screen
+// /
+// / Displays detailed information about a specific course
+// / and provides access to course-related features
 import 'package:flutter/material.dart';
 import '../models/course.dart';
 import '../features/qr_scanner/qr_scanner_screen.dart';

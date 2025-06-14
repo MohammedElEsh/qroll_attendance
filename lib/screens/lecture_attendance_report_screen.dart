@@ -1,6 +1,6 @@
-/// Lecture Attendance Report Screen
-///
-/// Displays detailed attendance information for lectures in a specific course
+// / Lecture Attendance Report Screen
+// /
+// / Displays detailed attendance information for lectures in a specific course
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/student_service.dart';
@@ -39,8 +39,6 @@ class _LectureAttendanceReportScreenState
 
     try {
       final courseId = int.tryParse(widget.course.id ?? '0') ?? 0;
-      print('LectureAttendance: Course ID: $courseId');
-      print('LectureAttendance: Course Name: ${widget.course.name}');
 
       if (courseId == 0) {
         throw Exception('Invalid course ID: ${widget.course.id}');
@@ -54,42 +52,25 @@ class _LectureAttendanceReportScreenState
         setState(() {
           if (response.statusCode == 200) {
             // Debug: Print response details
-            print(
-              'LectureAttendance: Response data type: ${response.data.runtimeType}',
-            );
-            print('LectureAttendance: Response data: ${response.data}');
 
             if (response.data is List) {
               _lectureAttendance = response.data;
-              print(
-                'LectureAttendance: Found ${_lectureAttendance.length} lecture records',
-              );
             } else if (response.data is Map && response.data['data'] is List) {
               _lectureAttendance = response.data['data'];
-              print(
-                'LectureAttendance: Found ${_lectureAttendance.length} lecture records in data field',
-              );
             } else if (response.data is Map &&
                 response.data['lectures'] is List) {
               _lectureAttendance = response.data['lectures'];
-              print(
-                'LectureAttendance: Found ${_lectureAttendance.length} lecture records in lectures field',
-              );
             } else {
               _lectureAttendance = [];
-              print('LectureAttendance: No valid data structure found');
             }
           } else {
             _error =
                 'Failed to load lecture attendance data (Status: ${response.statusCode})';
-            print('LectureAttendance: HTTP Error ${response.statusCode}');
           }
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('LectureAttendance: Error occurred: $e');
-      print('LectureAttendance: Error type: ${e.runtimeType}');
       if (mounted) {
         setState(() {
           _error = 'Failed to load lecture attendance: $e';
@@ -135,53 +116,35 @@ class _LectureAttendanceReportScreenState
               children: [
                 Text(
                   'COURCES',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   '>',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   widget.course.name ?? '',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   '>',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 Text(
                   'LECTURE ATTENDENCE REPORT',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
           // Table header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.shade200,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Colors.grey.shade200, width: 1),
               ),
             ),
             child: Row(
@@ -201,20 +164,14 @@ class _LectureAttendanceReportScreenState
                   flex: 2,
                   child: Text(
                     'DATE',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ),
                 Expanded(
                   flex: 1,
                   child: Text(
                     'STATUS',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ),
               ],
@@ -223,13 +180,14 @@ class _LectureAttendanceReportScreenState
 
           // Content area
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error.isNotEmpty
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error.isNotEmpty
                     ? _buildErrorView()
                     : _lectureAttendance.isEmpty
-                        ? _buildEmptyView()
-                        : _buildLectureList(),
+                    ? _buildEmptyView()
+                    : _buildLectureList(),
           ),
         ],
       ),
@@ -327,8 +285,13 @@ class _LectureAttendanceReportScreenState
   }
 
   Widget _buildLectureRow(dynamic lecture, int number) {
-    final String lectureDate = 
-        lecture['date']?.toString() ?? lecture['created_at']?.toString() ?? '';
+    // Extract data from the new API response structure
+    final lectureData = lecture['lecture'] ?? lecture;
+    final String lectureDate =
+        lectureData['created_at']?.toString() ??
+        lectureData['date']?.toString() ??
+        lecture['date']?.toString() ??
+        '';
     final String attendanceStatus =
         lecture['status']?.toString() ??
         lecture['attendance_status']?.toString() ??
@@ -341,16 +304,16 @@ class _LectureAttendanceReportScreenState
       case 'present':
       case 'attended':
         statusColor = Colors.green;
-        bgColor = Colors.green.withOpacity(0.1);
+        bgColor = Colors.green.withValues(alpha: 0.1);
         break;
       case 'absent':
       case 'missed':
         statusColor = Colors.red;
-        bgColor = Colors.red.withOpacity(0.1);
+        bgColor = Colors.red.withValues(alpha: 0.1);
         break;
       default:
         statusColor = Colors.grey;
-        bgColor = Colors.grey.withOpacity(0.1);
+        bgColor = Colors.grey.withValues(alpha: 0.1);
     }
 
     return Container(
@@ -364,18 +327,16 @@ class _LectureAttendanceReportScreenState
               width: 50,
               child: Text(
                 number.toString(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ),
             Expanded(
-              child: Text(
-                _formatDate(lectureDate),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 80),
+                child: Text(
+                  _formatDate(lectureDate),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ),
             ),

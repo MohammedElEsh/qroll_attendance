@@ -172,11 +172,6 @@ class StudentService {
   Future<Response> getStudentLectureAttendance(int courseId) async {
     try {
       final token = await getToken();
-      print('StudentService: Token exists: ${token != null}');
-      print('StudentService: Token length: ${token?.length ?? 0}');
-      print(
-        'StudentService: Making request to: $baseUrl/student/courses/$courseId/lectures-attendance',
-      );
 
       final response = await _dio.get(
         '$baseUrl/student/courses/$courseId/lectures-attendance',
@@ -196,11 +191,6 @@ class StudentService {
   Future<Response> getStudentSectionAttendance(int courseId) async {
     try {
       final token = await getToken();
-      print('StudentService: Section Token exists: ${token != null}');
-      print('StudentService: Section Token length: ${token?.length ?? 0}');
-      print(
-        'StudentService: Making request to: $baseUrl/student/courses/$courseId/sections-attendance',
-      );
 
       final response = await _dio.get(
         '$baseUrl/student/courses/$courseId/sections-attendance',
@@ -216,12 +206,17 @@ class StudentService {
   }
 
   /// Scan attendance QR code
-  /// Requires student privileges
+  /// Requires student privileges and Bearer token authentication
   Future<Response> scanAttendance(Map<String, dynamic> data) async {
     try {
       final token = await getToken();
 
-      // Convert data to FormData
+      if (token == null || token.isEmpty) {
+        throw Exception('Authentication token not found. Please login again.');
+      }
+
+
+      // Convert data to FormData as required by API
       final formData = FormData.fromMap({
         'lecture_id': data['lecture_id'],
         'course_id': data['course_id'],
@@ -229,13 +224,19 @@ class StudentService {
         'signature': data['signature'],
       });
 
+
       final response = await _dio.post(
         '$baseUrl/student/attendance/scan',
         data: formData,
         options: Options(
-          headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data',
+          },
         ),
       );
+
 
       return response;
     } catch (e) {

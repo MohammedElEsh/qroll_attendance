@@ -121,35 +121,32 @@ class AuthService {
   }
 
   /// Reset password with old and new password
+  /// Requires authentication token
   Future<Response> resetPassword({
     required String oldPassword,
     required String newPassword,
   }) async {
     try {
+      // Get the stored token for authentication
+      final token = await getToken();
+      if (token == null) {
+        throw Exception('Authentication token not found. Please login again.');
+      }
+
       final formData = FormData.fromMap({
         'old_password': oldPassword,
         'new_password': newPassword,
       });
 
+      // Configure headers with Bearer token
+      _dio.options.headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+        'Authorization': 'Bearer $token',
+      };
+
       final response = await _dio.post(
         '$baseUrl/reset-password',
-        data: formData,
-      );
-
-      return response;
-    } catch (e) {
-      _handleError(e);
-      rethrow;
-    }
-  }
-
-  /// Change password with new password
-  Future<Response> changePassword({required String newPassword}) async {
-    try {
-      final formData = FormData.fromMap({'password': newPassword});
-
-      final response = await _dio.post(
-        '$baseUrl/change-password',
         data: formData,
       );
 

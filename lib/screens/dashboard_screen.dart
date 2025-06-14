@@ -2,8 +2,8 @@
 // / Shows courses and sections overview.
 
 import 'package:flutter/material.dart';
-import '../services/profile_service.dart';
 import '../widgets/app_drawer.dart';
+import '../services/course_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,10 +13,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final ProfileService _profileService = ProfileService();
   bool _isLoading = true;
   int _courseCount = 0;
   int _sectionCount = 0;
+
+  final CourseService _courseService = CourseService();
 
   @override
   void initState() {
@@ -30,20 +31,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     try {
-      // TODO: Replace with actual API calls to get course and section counts
-      // This is a placeholder - implement proper service methods
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      setState(() {
-        _courseCount = 5; // Replace with actual data
-        _sectionCount = 4; // Replace with actual data
-        _isLoading = false;
-      });
+
+      // Get statistics from API
+      final statistics = await _courseService.getMyStatistics();
+
+
+      if (mounted) {
+        setState(() {
+          _courseCount = statistics?.coursesCount ?? 0;
+          _sectionCount =
+              statistics?.coursesCount ?? 0; // Same number as courses
+          _isLoading = false;
+        });
+
+      }
     } catch (e) {
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-        _showErrorSnackBar('Failed to load dashboard data: $e');
+
+        // Handle specific error cases
+        String errorMessage = 'Failed to load dashboard data';
+        if (e.toString().contains('No authentication token found')) {
+          errorMessage = 'Session expired. Please login again.';
+        } else if (e.toString().contains('Connection timeout')) {
+          errorMessage =
+              'Connection timeout. Please check your internet connection.';
+        } else {
+          errorMessage = 'Error: ${e.toString()}';
+        }
+
+        _showErrorSnackBar(errorMessage);
       }
     }
   }
@@ -58,11 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Navigates to the specified screen
-  void _navigateToScreen(Widget screen) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => screen));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,10 +86,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         toolbarHeight: 80,
         centerTitle: true,
         leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+          builder:
+              (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
         ),
         title: Image.asset(
           'assets/image/Screenshot 2025-05-20 042959.png',
@@ -84,30 +100,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
       ),
       drawer: const AppDrawer(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Container(
-                margin: const EdgeInsets.only(top: 155, left: 99),
-                width: 182,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDashboardItem(
-                      imagePath: 'assets/image/lecIcon.png',
-                      title: 'Courses',
-                      count: _courseCount,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                onRefresh: _loadDashboardData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 155, left: 99),
+                    width: 182,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDashboardItem(
+                          imagePath: 'assets/image/lecIcon.png',
+                          title: 'Courses',
+                          count: _courseCount,
+                        ),
+                        const SizedBox(height: 40),
+                        _buildDashboardItem(
+                          imagePath: 'assets/image/secIcon.png',
+                          title: 'Sections',
+                          count: _sectionCount,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
-                    _buildDashboardItem(
-                      imagePath: 'assets/image/secIcon.png',
-                      title: 'Sections',
-                      count: _sectionCount,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -132,14 +153,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: Colors.grey[100]?.withOpacity(0.2),
+                color: Colors.grey[100]?.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Image.asset(
-                imagePath,
-                width: 46,
-                height: 46,
-              ),
+              child: Image.asset(imagePath, width: 46, height: 46),
             ),
           ),
           Positioned(
