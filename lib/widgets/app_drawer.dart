@@ -297,19 +297,19 @@ class _AppDrawerState extends State<AppDrawer> {
     return Column(
       children: [
         // App Logo and Brand
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        Padding(          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Center(
             child: Container(
-              width: 120,
-              height: 80,
+              width: 180,
+              height: 180,
               decoration: BoxDecoration(
                 color: const Color(0xFF161B39),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Image.asset(
                 'assets/image/Screenshot 2025-05-20 035639.png',
                 fit: BoxFit.contain,
+                height: 180,
               ),
             ),
           ),

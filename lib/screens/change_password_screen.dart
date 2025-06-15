@@ -138,7 +138,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         centerTitle: true,
         title: Image.asset(
           'assets/image/Screenshot 2025-05-20 042959.png',
-          height: 40,
+          height: 100,
         ),
       ),
       body: SingleChildScrollView(
