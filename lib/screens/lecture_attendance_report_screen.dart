@@ -63,6 +63,30 @@ class _LectureAttendanceReportScreenState
             } else {
               _lectureAttendance = [];
             }
+
+            // Sort lectures in descending order (newest first)
+            _lectureAttendance.sort((a, b) {
+              final aLecture = a['lecture'] ?? a;
+              final bLecture = b['lecture'] ?? b;
+              final aDate =
+                  aLecture['created_at']?.toString() ??
+                  aLecture['date']?.toString() ??
+                  a['date']?.toString() ??
+                  '';
+              final bDate =
+                  bLecture['created_at']?.toString() ??
+                  bLecture['date']?.toString() ??
+                  b['date']?.toString() ??
+                  '';
+
+              try {
+                final dateA = DateTime.parse(aDate);
+                final dateB = DateTime.parse(bDate);
+                return dateB.compareTo(dateA); // Descending order
+              } catch (e) {
+                return 0;
+              }
+            });
           } else {
             _error =
                 'Failed to load lecture attendance data (Status: ${response.statusCode})';
@@ -333,7 +357,7 @@ class _LectureAttendanceReportScreenState
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.only(left: 80),
+                padding: const EdgeInsets.only(left: 40),
                 child: Text(
                   _formatDate(lectureDate),
                   style: const TextStyle(fontSize: 14, color: Colors.black54),

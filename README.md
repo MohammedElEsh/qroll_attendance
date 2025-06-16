@@ -58,20 +58,17 @@ lib/
 ├── main.dart                    # App entry point with theme configuration
 ├── models/                      # Data models and entities
 │   ├── user_profile.dart        # User profile data model
-│   ├── attendance_record.dart   # Attendance record model
 │   ├── student.dart             # Student information model
 │   └── inbox_message.dart       # Message data model with JSON serialization
 ├── services/                    # API services and business logic
 │   ├── auth_service.dart        # Authentication and session management
 │   ├── profile_service.dart     # Profile data management
 │   ├── student_service.dart     # Student-related operations
-│   ├── absence_service.dart     # Absence tracking and reporting
 │   └── inbox_service.dart       # Message retrieval and management
 ├── screens/                     # Application screens and pages
 │   ├── splash_screen.dart       # App startup and initialization
 │   ├── login_screen.dart        # User authentication interface
 │   ├── dashboard_screen.dart    # Main dashboard with overview
-│   ├── attendance_report.dart   # Attendance history and analytics
 │   ├── profile_screen.dart      # User profile display and editing
 │   ├── change_password_screen.dart # Password change functionality
 │   ├── inbox_screen.dart        # Message inbox with list view
@@ -80,7 +77,6 @@ lib/
 │   ├── custom_button.dart       # Styled button component
 │   ├── custom_textfield.dart    # Form input field component
 │   ├── app_drawer.dart          # Navigation sidebar
-│   ├── attendance_card.dart     # Attendance record display card
 │   └── message_card.dart        # Message list item component
 ├── features/                    # Feature-specific modules
 │   └── qr_scanner/              # QR code scanning functionality

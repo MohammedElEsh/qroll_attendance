@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/attendance_record.dart';
 
 class StudentService {
   // Singleton instance
@@ -246,34 +245,6 @@ class StudentService {
       print('📊 Status Code: ${response.statusCode}');
 
       return response;
-    } catch (e) {
-      _handleError(e);
-      rethrow;
-    }
-  }
-
-  /// Get all attendance records for the logged-in student
-  Future<List<AttendanceRecord>> getAllAttendanceRecords() async {
-    try {
-      final token = await getToken();
-      final response = await _dio.get(
-        '$baseUrl/student/attendance',
-        options: Options(
-          headers: token != null ? {'Authorization': 'Bearer $token'} : null,
-        ),
-      );
-      if (response.statusCode == 200 && response.data is List) {
-        return (response.data as List)
-            .map((json) => AttendanceRecord.fromJson(json))
-            .toList();
-      } else if (response.statusCode == 200 && response.data['data'] is List) {
-        // If API wraps data in a 'data' field
-        return (response.data['data'] as List)
-            .map((json) => AttendanceRecord.fromJson(json))
-            .toList();
-      } else {
-        throw Exception('Unexpected response format');
-      }
     } catch (e) {
       _handleError(e);
       rethrow;

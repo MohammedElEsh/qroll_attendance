@@ -63,6 +63,30 @@ class _SectionAttendanceReportScreenState
             } else {
               _sectionAttendance = [];
             }
+
+            // Sort sections in descending order (newest first)
+            _sectionAttendance.sort((a, b) {
+              final aSection = a['section'] ?? a;
+              final bSection = b['section'] ?? b;
+              final aDate =
+                  aSection['created_at']?.toString() ??
+                  aSection['date']?.toString() ??
+                  a['date']?.toString() ??
+                  '';
+              final bDate =
+                  bSection['created_at']?.toString() ??
+                  bSection['date']?.toString() ??
+                  b['date']?.toString() ??
+                  '';
+
+              try {
+                final dateA = DateTime.parse(aDate);
+                final dateB = DateTime.parse(bDate);
+                return dateB.compareTo(dateA); // Descending order
+              } catch (e) {
+                return 0;
+              }
+            });
           } else {
             _error =
                 'Failed to load section attendance data (Status: ${response.statusCode})';
@@ -337,7 +361,7 @@ class _SectionAttendanceReportScreenState
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.only(left: 80),
+                padding: const EdgeInsets.only(left: 40),
                 child: Text(
                   _formatDate(sectionDate),
                   style: const TextStyle(fontSize: 14, color: Colors.black54),

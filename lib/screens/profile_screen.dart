@@ -13,7 +13,8 @@ class ModernProfileScreen extends StatefulWidget {
   State<ModernProfileScreen> createState() => _ModernProfileScreenState();
 }
 
-class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service instances for API calls
+class _ModernProfileScreenState extends State<ModernProfileScreen> {
+  // Service instances for API calls
   final ProfileService _profileService = ProfileService();
   final AuthService _authService = AuthService();
 
@@ -26,7 +27,6 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
   // State management variables
   bool _isLoading = true; // Controls loading spinner visibility
   String? _errorMessage; // Stores error messages for display
-  bool _showPassword = false;
 
   @override
   void initState() {
@@ -62,6 +62,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
       });
     }
   }
+
   /// Fetches user profile data from API and populates form fields
   /// Handles loading states and error scenarios
   Future<void> _loadProfile() async {
@@ -96,6 +97,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
       });
     }
   }
+
   @override
   void dispose() {
     // Clean up text controllers to prevent memory leaks
@@ -120,92 +122,101 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-      ),      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
+      ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_errorMessage!),
-                      ElevatedButton(
-                        onPressed: _checkTokenAndLoadProfile,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_errorMessage!),
+                    ElevatedButton(
+                      onPressed: _checkTokenAndLoadProfile,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Section header
-                      const Text(
-                        'PROFILE',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF666666),
-                        ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Section header
+                    const Text(
+                      'PROFILE',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF666666),
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                    const SizedBox(height: 16),
 
-                      // User name field - editable
-                      _buildTextField('Name', _nameController),
-                      const SizedBox(height: 12),
+                    // User name field - read-only
+                    _buildTextField('Name', _nameController, enabled: false),
+                    const SizedBox(height: 12),
 
-                      // Academic ID field - read-only for security
-                      _buildTextField(
-                        'Academic ID',
-                        _academicIdController,
-                        enabled: false,
-                      ),
-                      const SizedBox(height: 12),
+                    // Academic ID field - read-only for security
+                    _buildTextField(
+                      'Academic ID',
+                      _academicIdController,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: 12),
 
-                      // Email field - editable
-                      _buildTextField('Email', _emailController),
-                      const SizedBox(height: 12),
+                    // Email field - read-only
+                    _buildTextField('Email', _emailController, enabled: false),
+                    const SizedBox(height: 12),
 
-                      // National ID field - editable
-                      _buildTextField('National ID', _nationalIdController),
-                      const SizedBox(height: 12),                      // Password field - masked display only
-                      _buildPasswordField(),
-                      const SizedBox(height: 40),
+                    // National ID field - read-only
+                    _buildTextField(
+                      'National ID',
+                      _nationalIdController,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: 40),
 
-                      // Navigation button to password change screen
-                      Center(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const ChangePasswordScreen(),
-                                ),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Color(0xFFE0E0E0)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                    // Navigation button to password change screen
+                    Center(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const ChangePasswordScreen(),
                               ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: const Color(
+                              0xFF1A237E,
+                            ), // Navy blue color
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
-                              'Change Password',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Change Password',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
     );
   }
 
@@ -240,10 +251,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
           controller: controller,
           enabled: enabled,
           maxLines: maxLines,
-          style: TextStyle(
-            fontSize: 14,
-            color: enabled ? Colors.black : Colors.grey[600],
-          ),
+          style: const TextStyle(fontSize: 14, color: Colors.black),
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -276,58 +284,6 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {  // Service
             // Placeholder text for empty disabled fields
             hintText: controller.text.isEmpty && !enabled ? 'No data' : null,
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          ),
-        ),
-      ],
-    );
-  }
-  /// Builds a password field with masked text display
-  /// Shows asterisks instead of actual password for security
-  Widget _buildPasswordField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Password',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          obscureText: !_showPassword,
-          enabled: false,
-          initialValue: '********************',
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _showPassword ? Icons.visibility : Icons.visibility_off,
-                color: Colors.grey[600],
-                size: 20,
-              ),
-              onPressed: () {
-                setState(() {
-                  _showPassword = !_showPassword;
-                });
-              },
-            ),
           ),
         ),
       ],
