@@ -49,54 +49,7 @@ class QRResultScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
-
-              // Additional scan details section
-              if (details != null && details!.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Details:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ...details!.entries.map((entry) {
-                        if (entry.value is Map) {
-                          return Container(); // Skip complex objects
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${_formatKey(entry.key)}: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(entry.value?.toString() ?? 'N/A'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
+              const SizedBox(height: 50),
 
               // Navigation buttons
               Row(
@@ -168,19 +121,5 @@ class QRResultScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// Formats a snake_case key into Title Case for display
-  String _formatKey(String key) {
-    // Convert snake_case to Title Case
-    return key
-        .split('_')
-        .map(
-          (word) =>
-              word.isNotEmpty
-                  ? '${word[0].toUpperCase()}${word.substring(1)}'
-                  : '',
-        )
-        .join(' ');
   }
 }

@@ -182,22 +182,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder:
-                (context) => QRResultScreen(
-                  success: success,
-                  message: message,
-                  details: {
-                    'qr_data': qrCode,
-                    'lecture_id': qrData['lecture_id'],
-                    'course_id': qrData['course_id'],
-                    'timestamp': DateTime.now().toString(),
-                    'api_response': response.data,
-                    'status_code': response.statusCode,
-                    'success_determined_by':
-                        success
-                            ? 'API response validation'
-                            : 'Error in response',
-                  },
-                ),
+                (context) => QRResultScreen(success: success, message: message),
           ),
         );
       }
