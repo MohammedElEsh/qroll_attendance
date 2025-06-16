@@ -104,7 +104,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   /// Processes the scanned QR code and marks attendance
   void _processQRCode(String qrCode) async {
     try {
-
       // Parse QR code data
       Map<String, dynamic> qrData;
       try {
@@ -121,10 +120,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         throw Exception('QR code missing required fields');
       }
 
-
       // Call the attendance API
       final response = await _studentService.scanAttendance(qrData);
-
 
       // Check if attendance was marked successfully
       bool success = false;
@@ -133,20 +130,52 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       if (response.statusCode == 200) {
         if (response.data is Map) {
           final data = response.data as Map<String, dynamic>;
+
+          // Check for different success indicators from API
           success =
               data['success'] == true ||
               data['status'] == 'success' ||
               data['status'] == true ||
-              data['status'] == 200;
+              data['status'] == 200 ||
+              data['attendance_status'] == 'true' ||
+              data['attendance_status'] == true ||
+              (data.containsKey('message') &&
+                  data['message'].toString().toLowerCase().contains(
+                    'recorded',
+                  )) ||
+              (data.containsKey('message') &&
+                  data['message'].toString().toLowerCase().contains('success'));
 
+          // Get the message from API response
           if (data.containsKey('message')) {
             message = data['message'].toString();
           }
+
+          // If message indicates failure, mark as failed
+          if (message.toLowerCase().contains('invalid') ||
+              message.toLowerCase().contains('error') ||
+              message.toLowerCase().contains('failed')) {
+            success = false;
+          }
         } else {
-          success = true; // Assume success if 200 status
+          success = true; // Assume success if 200 status and no data
+        }
+      } else {
+        // Handle non-200 status codes
+        success = false;
+        if (response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            message = data['message'].toString();
+          } else {
+            message =
+                'Failed to mark attendance (Status: ${response.statusCode})';
+          }
+        } else {
+          message =
+              'Failed to mark attendance (Status: ${response.statusCode})';
         }
       }
-
 
       // Navigate to result screen
       if (mounted) {
@@ -155,33 +184,60 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             builder:
                 (context) => QRResultScreen(
                   success: success,
-                  message: success ? message : 'Failed to mark attendance',
+                  message: message,
                   details: {
                     'qr_data': qrCode,
                     'lecture_id': qrData['lecture_id'],
                     'course_id': qrData['course_id'],
                     'timestamp': DateTime.now().toString(),
                     'api_response': response.data,
+                    'status_code': response.statusCode,
+                    'success_determined_by':
+                        success
+                            ? 'API response validation'
+                            : 'Error in response',
                   },
                 ),
           ),
         );
       }
     } catch (e) {
-
       // In case of error, resume the camera
       setState(() {
         _isProcessing = false;
       });
       _controller.start();
 
+      // Determine error message based on error type
+      String errorMessage = 'Error: ${e.toString()}';
+      if (e.toString().contains('Invalid QR code format')) {
+        errorMessage = 'QR Code format is invalid. Please try again.';
+      } else if (e.toString().contains('QR code missing required fields')) {
+        errorMessage = 'QR Code is missing required information.';
+      } else if (e.toString().contains('Authentication token not found')) {
+        errorMessage = 'Please login again to scan attendance.';
+      } else if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection')) {
+        errorMessage = 'No internet connection. Please check your network.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Request timeout. Please try again.';
+      }
+
       // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                // Retry scanning
+                _controller.start();
+              },
+            ),
           ),
         );
       }

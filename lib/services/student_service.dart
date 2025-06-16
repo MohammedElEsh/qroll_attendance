@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/attendance_record.dart';
@@ -215,15 +216,19 @@ class StudentService {
         throw Exception('Authentication token not found. Please login again.');
       }
 
-
-      // Convert data to FormData as required by API
-      final formData = FormData.fromMap({
+      // Convert data to the format expected by API
+      // The API expects form-data with a 'data' field containing the JSON string
+      final qrDataJson = jsonEncode({
         'lecture_id': data['lecture_id'],
         'course_id': data['course_id'],
         'timestamp': data['timestamp'],
         'signature': data['signature'],
       });
 
+      final formData = FormData.fromMap({'data': qrDataJson});
+
+      print('🔍 Sending QR attendance data: $qrDataJson');
+      print('📦 FormData field "data": $qrDataJson');
 
       final response = await _dio.post(
         '$baseUrl/student/attendance/scan',
@@ -237,6 +242,8 @@ class StudentService {
         ),
       );
 
+      print('📡 API Response: ${response.data}');
+      print('📊 Status Code: ${response.statusCode}');
 
       return response;
     } catch (e) {
