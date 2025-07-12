@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         // Configure card styling for dashboard stats
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: Colors.grey[100],
           elevation: 0,
           shape: RoundedRectangleBorder(

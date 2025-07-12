@@ -1,93 +1,47 @@
+
 # QRoll Attendance
 
-A comprehensive Flutter mobile application for managing student attendance using QR code scanning, with integrated messaging and profile management features.
+QRoll Attendance is a modern Flutter app for educational institutions to manage student attendance efficiently using QR code scanning, secure authentication, and real-time messaging.
 
-## ✨ Features
 
-### 🔐 Authentication & Security
-- **Secure Student Login**: JWT token-based authentication system
-- **Password Management**: Change password securely with validation
-- **Session Management**: Automatic token refresh and secure logout
+## Features
 
-### 📱 Core Functionality
-- **QR Code Scanning**: Mark attendance by scanning QR codes with camera integration
-- **Attendance Reports**: View detailed attendance history with statistics and analytics
-- **Dashboard**: Modern, intuitive dashboard with attendance overview and quick actions
+- **QR Code Attendance:** Mark attendance instantly by scanning QR codes
+- **Secure Authentication:** JWT-based login, password management, and session handling
+- **Attendance Analytics:** View attendance history, statistics, and dashboard overview
+- **Messaging System:** Inbox for messages from staff, teachers, and TAs
+- **Profile Management:** View and update personal info, including profile picture
 
-### 💬 Communication
-- **Inbox System**: Read-only message viewer for receiving communications from:
-  - Teachers and Instructors
-  - Administrative Staff
-  - Teaching Assistants
-- **Message Details**: View full message content with sender information and timestamps
-- **Role-based Messaging**: Visual indicators for different sender roles
+## Tech Stack
 
-### 👤 Profile Management
-- **Profile Viewing**: Display personal information and student details
-- **Profile Updates**: Edit and update personal information
-- **User Avatar**: Profile picture support with fallback initials
+- **Flutter** (Material 3) & **Dart**
+- **Riverpod** for state management
+- **REST API** with **Dio** for backend integration
+- **JWT** for authentication
+- **SharedPreferences**  for local/encrypted storage
+- **QR Code Scanner**, **Image Picker**, and more
 
-## 🛠️ Technology Stack
-
-### Frontend
-- **Flutter**: Cross-platform mobile development framework
-- **Dart**: Programming language for Flutter development
-- **Material Design 3**: Modern UI components and design system
-
-### Backend Integration
-- **REST API**: Integration with custom backend services
-- **Dio**: HTTP client for API communication with interceptors and error handling
-- **JWT Authentication**: Secure token-based authentication system
-
-### State Management & Storage
-- **Riverpod**: Reactive state management solution
-- **SharedPreferences**: Local storage for user preferences and tokens
-- **Flutter Secure Storage**: Encrypted storage for sensitive data
-
-### Additional Libraries
-- **QR Code Scanner**: Camera-based QR code scanning functionality
-- **Image Picker**: Profile picture selection and upload
-- **Pull to Refresh**: Enhanced user experience with refresh indicators
-
-## 📁 Project Structure
-
-The application follows a clean, modular architecture with separation of concerns:
+## Project Structure
 
 ```
 lib/
-├── main.dart                    # App entry point with theme configuration
-├── models/                      # Data models and entities
-│   ├── user_profile.dart        # User profile data model
-│   ├── student.dart             # Student information model
-│   └── inbox_message.dart       # Message data model with JSON serialization
-├── services/                    # API services and business logic
-│   ├── auth_service.dart        # Authentication and session management
-│   ├── profile_service.dart     # Profile data management
-│   ├── student_service.dart     # Student-related operations
-│   └── inbox_service.dart       # Message retrieval and management
-├── screens/                     # Application screens and pages
-│   ├── splash_screen.dart       # App startup and initialization
-│   ├── login_screen.dart        # User authentication interface
-│   ├── dashboard_screen.dart    # Main dashboard with overview
-│   ├── profile_screen.dart      # User profile display and editing
-│   ├── change_password_screen.dart # Password change functionality
-│   ├── inbox_screen.dart        # Message inbox with list view
-│   └── message_detail_screen.dart # Individual message viewer
-├── widgets/                     # Reusable UI components
-│   ├── custom_button.dart       # Styled button component
-│   ├── custom_textfield.dart    # Form input field component
-│   ├── app_drawer.dart          # Navigation sidebar
-│   └── message_card.dart        # Message list item component
-├── features/                    # Feature-specific modules
-│   └── qr_scanner/              # QR code scanning functionality
-│       ├── qr_scanner_screen.dart
-│       ├── qr_result_screen.dart
-│       └── scanner_overlay.dart
-└── assets/                      # Static resources
-    ├── fonts/                   # Inter font family
-    ├── icons/                   # App icons and logos
-    └── images/                  # UI images and screenshots
+├── main.dart            # App entry point & theme
+├── models/              # Data models (user, course, etc.)
+├── screens/             # UI screens (auth, dashboard, attendance, etc.)
+├── services/            # API & business logic
+├── utils/               # Helpers & utilities
+├── widgets/             # Reusable UI components
 ```
+
+## Getting Started
+
+1. Install dependencies: `flutter pub get`
+2. Run the app: `flutter run`
+3. Configure backend endpoints in the services as needed
+
+## License
+
+MIT License © 2025 Mohamed M. El Esh
 
 ## 🚀 Getting Started
 
